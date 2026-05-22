@@ -1,0 +1,227 @@
+<div class="dashboard-shell">
+    <section class="hero-panel">
+        <div class="hero-copy">
+            <p class="eyebrow">Panel de empleado</p>
+            <h1>Gestión operativa de AGROSYS</h1>
+            <p class="hero-text">
+                Monitorea clientes, productos, proveedores y órdenes con una interfaz clara, minimalista y orientada a la acción.
+            </p>
+
+            <div class="hero-badges">
+                <span><i class="ion-calendar"></i> {{ dashboardDate | date: 'dd/MM/yyyy' }}</span>
+                <span><i class="ion-ios-list-outline"></i> Base SQL sincronizada</span>
+                <span><i class="ion-android-checkmark-circle"></i> Acceso exclusivo para empleados</span>
+            </div>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hero-stat-card accent-customers">
+                <i class="ion-person-stalker"></i>
+                <strong>{{ formatCount(activeCustomers) }}</strong>
+                <span>Clientes activos</span>
+            </div>
+            <div class="hero-stat-card accent-products">
+                <i class="ion-leaf"></i>
+                <strong>{{ formatCount(activeProducts) }}</strong>
+                <span>Productos activos</span>
+            </div>
+            <div class="hero-stat-card accent-providers">
+                <i class="ion-briefcase"></i>
+                <strong>{{ formatCount(activeProviders) }}</strong>
+                <span>Proveedores activos</span>
+            </div>
+            <div class="hero-stat-card accent-orders">
+                <i class="ion-clipboard"></i>
+                <strong>{{ formatCount(pendingOrders) }}</strong>
+                <span>Órdenes pendientes</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel-grid">
+        <article class="neumo-card metrics-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Vista general</p>
+                    <h2>Indicadores operativos</h2>
+                </div>
+                <i class="ion-stats-bars"></i>
+            </div>
+
+            <div *ngIf="loading" class="loading-state">
+                <i class="ion-load-c spinning"></i>
+                <p>Cargando estadísticas...</p>
+            </div>
+
+            <div *ngIf="errorMessage" class="error-banner">
+                {{ errorMessage }}
+            </div>
+
+            <div *ngIf="!loading" class="metrics-grid">
+                <a *ngFor="let metric of metrics" class="metric-card" [routerLink]="metric.route">
+                    <div class="metric-icon" [ngClass]="metric.accentClass">
+                        <i [class]="metric.icon"></i>
+                    </div>
+                    <div class="metric-copy">
+                        <span>{{ metric.label }}</span>
+                        <strong>{{ formatCount(metric.value) }}</strong>
+                        <small>{{ metric.note }}</small>
+                    </div>
+                </a>
+            </div>
+        </article>
+
+        <article class="neumo-card quick-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Búsqueda rápida</p>
+                    <h2>Ir al módulo correcto</h2>
+                </div>
+                <i class="ion-search"></i>
+            </div>
+
+            <form class="quick-form" [formGroup]="quickForm" (ngSubmit)="submitQuickSearch()" novalidate>
+                <label>
+          <span>Buscar</span>
+          <input type="text" formControlName="searchTerm" placeholder="Empresa, correo, RUC o producto" />
+          <small *ngIf="searchTermControl?.touched && searchTermControl?.invalid">
+            Ingresa al menos 3 caracteres.
+          </small>
+        </label>
+
+                <label>
+          <span>Sección</span>
+          <select formControlName="area">
+            <option value="customers">Clientes</option>
+            <option value="products">Productos</option>
+            <option value="providers">Proveedores</option>
+          </select>
+          <small *ngIf="areaControl?.touched && areaControl?.invalid">
+            Selecciona una sección.
+          </small>
+        </label>
+
+                <button type="submit" class="primary-action">
+          <i class="ion-arrow-right-c"></i>
+          Abrir módulo
+        </button>
+            </form>
+        </article>
+    </section>
+
+    <section class="panel-grid secondary-grid">
+        <article class="neumo-card list-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Acceso rápido</p>
+                    <h2>Gestiones frecuentes</h2>
+                </div>
+                <i class="ion-hammer"></i>
+            </div>
+
+            <div class="quick-links">
+                <a *ngFor="let link of quickLinks" [routerLink]="link.route" class="quick-link">
+                    <span class="quick-link-icon" [ngClass]="link.tone">
+            <i [class]="link.icon"></i>
+          </span>
+                    <div>
+                        <strong>{{ link.label }}</strong>
+                        <p>{{ link.description }}</p>
+                    </div>
+                </a>
+            </div>
+        </article>
+
+        <article class="neumo-card list-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Operación reciente</p>
+                    <h2>Clientes y catálogo</h2>
+                </div>
+                <i class="ion-android-time"></i>
+            </div>
+
+            <div class="summary-list" *ngIf="recentCustomers.length > 0; else emptyCustomers">
+                <div class="summary-item" *ngFor="let customer of recentCustomers">
+                    <i class="ion-person"></i>
+                    <div>
+                        <strong>{{ customer.companyName }}</strong>
+                        <p>{{ customer.country }} · {{ customer.email }}</p>
+                    </div>
+                    <span [class.active-pill]="customer.isActive" [class.inactive-pill]="!customer.isActive">
+            {{ customer.isActive ? 'Activo' : 'Inactivo' }}
+          </span>
+                </div>
+            </div>
+
+            <ng-template #emptyCustomers>
+                <div class="empty-state">No hay clientes registrados.</div>
+            </ng-template>
+
+            <div class="summary-list compact-list" *ngIf="recentProducts.length > 0">
+                <div class="summary-item" *ngFor="let product of recentProducts">
+                    <i class="ion-leaf"></i>
+                    <div>
+                        <strong>{{ product.name }}</strong>
+                        <p>{{ product.variety || 'Sin variedad' }} · {{ product.unitMeasure }}</p>
+                    </div>
+                    <span>{{ product.isOwnProduction ? 'Propio' : 'Tercero' }}</span>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel-grid tertiary-grid">
+        <article class="neumo-card list-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Pedidos</p>
+                    <h2>Órdenes recientes</h2>
+                </div>
+                <i class="ion-clipboard"></i>
+            </div>
+
+            <div class="summary-list" *ngIf="recentOrders.length > 0; else emptyOrders">
+                <div class="summary-item" *ngFor="let order of recentOrders">
+                    <i class="ion-paper-airplane"></i>
+                    <div>
+                        <strong>{{ order.orderCode || ('Pedido #' + order.orderId) }}</strong>
+                        <p>{{ order.incoterm || 'Sin incoterm' }} · {{ order.orderDate | date: 'dd/MM/yyyy' }}</p>
+                    </div>
+                    <span class="status-pill">{{ order.status || 'Sin estado' }}</span>
+                </div>
+            </div>
+
+            <ng-template #emptyOrders>
+                <div class="empty-state">No hay órdenes registradas.</div>
+            </ng-template>
+        </article>
+
+        <article class="neumo-card list-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Proveedores</p>
+                    <h2>Red comercial</h2>
+                </div>
+                <i class="ion-briefcase"></i>
+            </div>
+
+            <div class="summary-list" *ngIf="recentProviders.length > 0; else emptyProviders">
+                <div class="summary-item" *ngFor="let provider of recentProviders">
+                    <i class="ion-briefcase"></i>
+                    <div>
+                        <strong>{{ provider.companyName }}</strong>
+                        <p>{{ provider.productType || 'Producto no definido' }} · {{ provider.taxId }}</p>
+                    </div>
+                    <span [class.active-pill]="provider.isActive" [class.inactive-pill]="!provider.isActive">
+            {{ provider.isActive ? 'Activo' : 'Inactivo' }}
+          </span>
+                </div>
+            </div>
+
+            <ng-template #emptyProviders>
+                <div class="empty-state">No hay proveedores registrados.</div>
+            </ng-template>
+        </article>
+    </section>
+</div>

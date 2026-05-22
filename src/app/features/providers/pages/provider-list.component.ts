@@ -1,0 +1,1 @@
+export * from '../provider-list/provider-list.component';

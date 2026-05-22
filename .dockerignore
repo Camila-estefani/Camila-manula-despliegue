@@ -1,0 +1,28 @@
+# Dependencias y caches
+/node_modules
+/.angular
+/.npm
+/npm-debug.log*
+
+# Entornos y editor
+/.vscode
+/.idea
+*.swp
+*.swo
+
+# Build artifacts
+/dist
+/tmp
+/coverage
+
+# Archivos de log
+/logs
+*.log
+
+# VCS y sistema
+/.git
+/.gitignore
+/.DS_Store
+
+# Archivos locales opcionales
+*.local

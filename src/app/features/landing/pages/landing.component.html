@@ -1,0 +1,498 @@
+<!-- ===== NAVBAR ===== -->
+<nav class="landing-nav">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <span class="brand-icon">🌿</span>
+            <span class="brand-name">Visons</span>
+        </div>
+        <button class="nav-toggle" (click)="toggleMenu()" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+        <ul class="nav-links" [class.open]="menuOpen">
+            <li><a (click)="scrollTo('inicio')" class="nav-link">Inicio</a></li>
+            <li><a (click)="scrollTo('nosotros')" class="nav-link">Nosotros</a></li>
+            <li><a (click)="scrollTo('oferta')" class="nav-link">Qué Ofrecemos</a></li>
+            <li><a (click)="scrollTo('mision-vision')" class="nav-link">Misión & Visión</a></li>
+            <li><a (click)="scrollTo('ubicacion')" class="nav-link">Ubicación</a></li>
+            <li><a (click)="goToLogin()" class="nav-link">Iniciar Sesión</a></li>
+            <li><a (click)="scrollTo('solicitud')" class="nav-link nav-cta">Solicitar Acceso</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section id="inicio" class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <span class="hero-badge">Exportaciones Agrícolas de Calidad</span>
+        <h1 class="hero-title">Conectamos el campo<br>con el mundo</h1>
+        <p class="hero-subtitle">
+            Somos una empresa peruana especializada en la exportación de productos agrícolas frescos, llevando lo mejor de nuestras tierras a mercados internacionales con estándares de excelencia.
+        </p>
+        <div class="hero-actions">
+            <button class="btn-primary" (click)="scrollTo('oferta')">Conocer más</button>
+            <button class="btn-outline" (click)="scrollTo('solicitud')">Solicitar acceso</button>
+        </div>
+    </div>
+    <button class="hero-scroll-hint" type="button" (click)="scrollTo('nosotros')">
+    <span>↓</span>
+  </button>
+</section>
+
+<!-- ===== NOSOTROS / HISTORIA ===== -->
+<section id="nosotros" class="section section-light">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Nuestra Historia</span>
+            <h2 class="section-title">Quiénes somos</h2>
+            <p class="section-subtitle">
+                Más de una década conectando productores peruanos con compradores internacionales
+            </p>
+        </div>
+        <div class="about-grid">
+            <div class="about-card">
+                <div class="about-icon">🌱</div>
+                <h3>Nuestros Orígenes</h3>
+                <p>
+                    Visons nació en el Valle Grande con la visión de transformar la agricultura peruana en un referente de calidad global. Desde nuestros inicios, apostamos por el trabajo directo con agricultores locales, garantizando trazabilidad y frescura en cada producto.
+                </p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">🤝</div>
+                <h3>Nuestro Compromiso</h3>
+                <p>
+                    Trabajamos bajo estrictos estándares de calidad y sostenibilidad. Cada lote que exportamos pasa por rigurosos controles de calidad para asegurar que llegue en perfectas condiciones a nuestros clientes en todo el mundo.
+                </p>
+            </div>
+            <div class="about-card">
+                <div class="about-icon">🌍</div>
+                <h3>Alcance Global</h3>
+                <p>
+                    Hoy exportamos a más de 15 países en Europa, Asia y América del Norte. Nuestra red de clientes internacionales confía en Visons por nuestra puntualidad, calidad constante y atención personalizada.
+                </p>
+            </div>
+        </div>
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-number">15+</span>
+                <span class="stat-label">Países destino</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">200+</span>
+                <span class="stat-label">Clientes activos</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">10+</span>
+                <span class="stat-label">Años de experiencia</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">50+</span>
+                <span class="stat-label">Variedades de productos</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== QUÉ OFRECEMOS ===== -->
+<section id="oferta" class="section section-soft">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Nuestros Productos</span>
+            <h2 class="section-title">Qué ofrecemos</h2>
+            <p class="section-subtitle">
+                Productos frescos, de temporada y con certificación de origen peruano
+            </p>
+        </div>
+        <div class="offer-grid">
+            <div class="offer-card">
+                <div class="offer-img offer-img-1"></div>
+                <div class="offer-body">
+                    <h3>Frutas Frescas</h3>
+                    <p>Uvas, arándanos, mangos, paltas y más. Cosechados en su punto óptimo para garantizar sabor y durabilidad en el transporte internacional.</p>
+                    <span class="offer-tag">Temporada disponible</span>
+                </div>
+            </div>
+            <div class="offer-card">
+                <div class="offer-img offer-img-2"></div>
+                <div class="offer-body">
+                    <h3>Hortalizas y Verduras</h3>
+                    <p>Espárragos, alcachofas, pimientos y más. Cultivados con técnicas modernas que preservan sus propiedades nutricionales y frescura.</p>
+                    <span class="offer-tag">Exportación continua</span>
+                </div>
+            </div>
+            <div class="offer-card">
+                <div class="offer-img offer-img-3"></div>
+                <div class="offer-body">
+                    <h3>Productos Orgánicos</h3>
+                    <p>Línea certificada libre de pesticidas. Ideal para mercados europeos y asiáticos con alta demanda de productos naturales y sostenibles.</p>
+                    <span class="offer-tag">Certificado orgánico</span>
+                </div>
+            </div>
+            <div class="offer-card">
+                <div class="offer-img offer-img-4"></div>
+                <div class="offer-body">
+                    <h3>Logística Especializada</h3>
+                    <p>Cadena de frío garantizada desde la cosecha hasta el destino. Trabajamos con operadores logísticos certificados para exportaciones seguras.</p>
+                    <span class="offer-tag">Cadena de frío</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== MISIÓN Y VISIÓN ===== -->
+<section id="mision-vision" class="section section-light">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Nuestra Filosofía</span>
+            <h2 class="section-title">Misión & Visión</h2>
+        </div>
+        <div class="mv-grid">
+            <div class="mv-card mv-mision">
+                <div class="mv-icon">🎯</div>
+                <h3>Misión</h3>
+                <p>
+                    Conectar a los productores agrícolas peruanos con los mercados internacionales, ofreciendo productos de alta calidad con trazabilidad completa, precios justos y un servicio de exportación confiable que impulse el desarrollo sostenible de las comunidades
+                    agrícolas del Perú.
+                </p>
+            </div>
+            <div class="mv-card mv-vision">
+                <div class="mv-icon">🔭</div>
+                <h3>Visión</h3>
+                <p>
+                    Ser la empresa exportadora agrícola peruana más reconocida a nivel global para 2030, destacando por nuestra innovación en procesos, compromiso con la sostenibilidad ambiental y la generación de valor compartido entre productores, trabajadores y clientes
+                    internacionales.
+                </p>
+            </div>
+        </div>
+        <div class="values-row">
+            <div class="value-item">
+                <span class="value-icon">✨</span>
+                <span class="value-label">Calidad</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">🌿</span>
+                <span class="value-label">Sostenibilidad</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">🤝</span>
+                <span class="value-label">Confianza</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">💡</span>
+                <span class="value-label">Innovación</span>
+            </div>
+            <div class="value-item">
+                <span class="value-icon">🏆</span>
+                <span class="value-label">Excelencia</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== UBICACIÓN ===== -->
+<section id="ubicacion" class="section section-soft">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Encuéntranos</span>
+            <h2 class="section-title">Nuestra Ubicación</h2>
+            <p class="section-subtitle">Estamos en el corazón del Valle Grande, Lima, Perú</p>
+        </div>
+        <div class="location-grid">
+            <div class="location-info">
+                <div class="location-item">
+                    <span class="location-icon">📍</span>
+                    <div>
+                        <strong>Dirección</strong>
+                        <p>Av. Valle Grande 1234, Chilca, Cañete, Lima — Perú</p>
+                    </div>
+                </div>
+                <div class="location-item">
+                    <span class="location-icon">📞</span>
+                    <div>
+                        <strong>Teléfono</strong>
+                        <p>+51 (01) 234-5678</p>
+                    </div>
+                </div>
+                <div class="location-item">
+                    <span class="location-icon">✉️</span>
+                    <div>
+                        <strong>Correo</strong>
+                        <p>contacto&#64;visons.pe</p>
+                    </div>
+                </div>
+                <div class="location-item">
+                    <span class="location-icon">🕐</span>
+                    <div>
+                        <strong>Horario de atención</strong>
+                        <p>Lunes a Viernes: 8:00 am – 6:00 pm<br>Sábados: 8:00 am – 1:00 pm</p>
+                    </div>
+                </div>
+            </div>
+            <div class="location-map">
+                <div class="map-placeholder">
+                    <span class="map-icon">🗺️</span>
+                    <p>Valle Grande, Cañete</p>
+                    <p class="map-sub">Lima, Perú</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FORMULARIO DE SOLICITUD ===== -->
+<section id="solicitud" class="section section-form">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Únete a Visons</span>
+            <h2 class="section-title">Solicitar Acceso como Cliente</h2>
+            <p class="section-subtitle">
+                Completa el formulario y nuestro equipo revisará tu solicitud en un plazo de 48 horas hábiles
+            </p>
+        </div>
+
+        <!-- Mensaje de éxito -->
+        <div class="alert-success" *ngIf="submitSuccess">
+            <span class="alert-icon">✅</span>
+            <div>
+                <strong>¡Solicitud enviada con éxito!</strong>
+                <p>Hemos recibido tu solicitud. Nuestro equipo se pondrá en contacto contigo pronto.</p>
+            </div>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div class="alert-error" *ngIf="submitError">
+            <span class="alert-icon">⚠️</span>
+            <div>
+                <strong>Error al enviar la solicitud</strong>
+                <p>{{ errorMessage }}</p>
+            </div>
+        </div>
+
+        <form class="request-form" #requestForm="ngForm" (ngSubmit)="onSubmit(requestForm)" novalidate>
+            <div class="form-grid">
+
+                <!-- Nombre de usuario -->
+                <div class="form-group form-full">
+                    <label for="username">Nombre de usuario <span class="required">*</span></label>
+                    <input
+                        id="username"
+                        type="text"
+                        name="username"
+                        [(ngModel)]="formData.username"
+                        required
+                        minlength="3"
+                        maxlength="50"
+                        pattern="^[a-zA-Z0-9_]+$"
+                        placeholder="Ej: empresa_peru"
+                        #usernameField="ngModel"
+                        [class.input-error]="usernameField.invalid && usernameField.touched"
+                    />
+                    <span class="field-error" *ngIf="usernameField.touched && usernameField.errors?.['required']">
+                        El nombre de usuario es obligatorio.
+                    </span>
+                    <span class="field-error" *ngIf="usernameField.touched && usernameField.errors?.['minlength']">
+                        Debe tener al menos 3 caracteres.
+                    </span>
+                    <span class="field-error" *ngIf="usernameField.touched && usernameField.errors?.['pattern']">
+                        Solo se permiten letras, números y guion bajo (_). Sin espacios ni caracteres especiales.
+                    </span>
+                </div>
+
+                <!-- Nombre -->
+                <div class="form-group">
+                    <label for="firstName">Nombre <span class="required">*</span></label>
+                    <input
+                        id="firstName"
+                        type="text"
+                        name="firstName"
+                        [(ngModel)]="formData.firstName"
+                        required
+                        minlength="2"
+                        maxlength="100"
+                        pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$"
+                        placeholder="Tu nombre"
+                        #firstNameField="ngModel"
+                        [class.input-error]="firstNameField.invalid && firstNameField.touched"
+                    />
+                    <span class="field-error" *ngIf="firstNameField.touched && firstNameField.errors?.['required']">
+                        El nombre es obligatorio.
+                    </span>
+                    <span class="field-error" *ngIf="firstNameField.touched && firstNameField.errors?.['minlength']">
+                        El nombre debe tener al menos 2 caracteres.
+                    </span>
+                    <span class="field-error" *ngIf="firstNameField.touched && firstNameField.errors?.['pattern']">
+                        Solo se permiten letras y espacios. No se aceptan números ni símbolos.
+                    </span>
+                </div>
+
+                <!-- Apellido -->
+                <div class="form-group">
+                    <label for="lastName">Apellido <span class="required">*</span></label>
+                    <input
+                        id="lastName"
+                        type="text"
+                        name="lastName"
+                        [(ngModel)]="formData.lastName"
+                        required
+                        minlength="2"
+                        maxlength="100"
+                        pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$"
+                        placeholder="Tu apellido"
+                        #lastNameField="ngModel"
+                        [class.input-error]="lastNameField.invalid && lastNameField.touched"
+                    />
+                    <span class="field-error" *ngIf="lastNameField.touched && lastNameField.errors?.['required']">
+                        El apellido es obligatorio.
+                    </span>
+                    <span class="field-error" *ngIf="lastNameField.touched && lastNameField.errors?.['minlength']">
+                        El apellido debe tener al menos 2 caracteres.
+                    </span>
+                    <span class="field-error" *ngIf="lastNameField.touched && lastNameField.errors?.['pattern']">
+                        Solo se permiten letras y espacios. No se aceptan números ni símbolos.
+                    </span>
+                </div>
+
+                <!-- Empresa -->
+                <div class="form-group">
+                    <label for="companyName">Empresa / Razón Social</label>
+                    <input
+                        id="companyName"
+                        type="text"
+                        name="companyName"
+                        [(ngModel)]="formData.companyName"
+                        minlength="2"
+                        maxlength="200"
+                        placeholder="Nombre de tu empresa"
+                        #companyNameField="ngModel"
+                        [class.input-error]="companyNameField.invalid && companyNameField.touched"
+                    />
+                    <span class="field-error" *ngIf="companyNameField.touched && companyNameField.errors?.['minlength']">
+                        El nombre de la empresa debe tener al menos 2 caracteres.
+                    </span>
+                </div>
+
+                <!-- RUC / Tax ID -->
+                <div class="form-group">
+                    <label for="taxId">RUC / Tax ID</label>
+                    <input
+                        id="taxId"
+                        type="text"
+                        name="taxId"
+                        [(ngModel)]="formData.taxId"
+                        maxlength="11"
+                        pattern="^[0-9]{11}$"
+                        placeholder="Ej: 20123456789"
+                        #taxIdField="ngModel"
+                        [class.input-error]="taxIdField.invalid && taxIdField.touched"
+                    />
+                    <span class="field-error" *ngIf="taxIdField.touched && taxIdField.errors?.['pattern']">
+                        El RUC debe contener exactamente 11 dígitos numéricos.
+                    </span>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">Correo electrónico <span class="required">*</span></label>
+                    <input
+                        id="email"
+                        type="email"
+                        name="email"
+                        [(ngModel)]="formData.email"
+                        required
+                        maxlength="150"
+                        pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
+                        placeholder="correo@empresa.com"
+                        #emailField="ngModel"
+                        [class.input-error]="emailField.invalid && emailField.touched"
+                    />
+                    <span class="field-error" *ngIf="emailField.touched && emailField.errors?.['required']">
+                        El correo electrónico es obligatorio.
+                    </span>
+                    <span class="field-error" *ngIf="emailField.touched && (emailField.errors?.['email'] || emailField.errors?.['pattern'])">
+                        Ingresa un correo válido. Ejemplo: nombre&#64;dominio.com
+                    </span>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group">
+                    <label for="phone">Teléfono / WhatsApp</label>
+                    <input
+                        id="phone"
+                        type="tel"
+                        name="phone"
+                        [(ngModel)]="formData.phone"
+                        maxlength="15"
+                        pattern="^[\+]?[0-9\s\-]{7,15}$"
+                        placeholder="+51 999 999 999"
+                        #phoneField="ngModel"
+                        [class.input-error]="phoneField.invalid && phoneField.touched"
+                    />
+                    <span class="field-error" *ngIf="phoneField.touched && phoneField.errors?.['pattern']">
+                        Ingresa un número de teléfono válido. Solo números, espacios o guiones. Ej: +51 999 999 999
+                    </span>
+                </div>
+
+                <!-- Dirección -->
+                <div class="form-group form-full">
+                    <label for="address">Dirección</label>
+                    <textarea
+                        id="address"
+                        name="address"
+                        [(ngModel)]="formData.address"
+                        rows="3"
+                        minlength="5"
+                        maxlength="300"
+                        placeholder="Dirección completa de tu empresa o domicilio"
+                        #addressField="ngModel"
+                        [class.input-error]="addressField.invalid && addressField.touched"
+                    ></textarea>
+                    <span class="field-error" *ngIf="addressField.touched && addressField.errors?.['minlength']">
+                        La dirección debe tener al menos 5 caracteres.
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="form-footer">
+                <p class="form-note">
+                    <span>🔒</span> Tu información está protegida y solo será usada para procesar tu solicitud.
+                </p>
+                <button type="submit" class="btn-submit" [disabled]="requestForm.invalid || isSubmitting">
+                    <span *ngIf="!isSubmitting">Enviar Solicitud</span>
+                    <span *ngIf="isSubmitting">Enviando...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="landing-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <span class="brand-icon">🌿</span>
+            <span class="brand-name">Visons</span>
+            <p>Exportaciones agrícolas peruanas con calidad mundial.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Navegación</h4>
+            <ul>
+                <li><a (click)="scrollTo('inicio')">Inicio</a></li>
+                <li><a (click)="scrollTo('nosotros')">Nosotros</a></li>
+                <li><a (click)="scrollTo('oferta')">Qué Ofrecemos</a></li>
+                <li><a (click)="scrollTo('mision-vision')">Misión & Visión</a></li>
+                <li><a (click)="scrollTo('ubicacion')">Ubicación</a></li>
+            </ul>
+        </div>
+        <div class="footer-contact">
+            <h4>Contacto</h4>
+            <p>📍 Valle Grande, Cañete, Lima</p>
+            <p>📞 +51 (01) 234-5678</p>
+            <p>✉️ contacto&#64;visons.pe</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2025 Visons. Todos los derechos reservados.</p>
+    </div>
+</footer>

@@ -1,0 +1,45 @@
+<section class="profile-page">
+  <div class="profile-hero">
+    <p class="eyebrow">Perfil del trabajador</p>
+    <h1>{{ fullName }}</h1>
+    <p class="subtitle">Información de solo lectura del usuario autenticado.</p>
+  </div>
+
+  <div class="profile-card">
+    <div class="profile-avatar">
+      {{ fullName.charAt(0) }}
+    </div>
+
+    <div class="profile-details">
+      <div class="detail-item">
+        <span class="label">Nombre completo</span>
+        <span class="value">{{ fullName }}</span>
+      </div>
+
+      <div class="detail-item">
+        <span class="label">Correo</span>
+        <span class="value">{{ email }}</span>
+      </div>
+
+      <div class="detail-item">
+        <span class="label">Rol</span>
+        <span class="value">{{ role }}</span>
+      </div>
+
+      <div class="detail-item">
+        <span class="label">Estado</span>
+        <span class="value status" [class.active]="status === 'Activo'">{{ status }}</span>
+      </div>
+
+      <div class="detail-item">
+        <span class="label">Teléfono</span>
+        <span class="value">{{ phone }}</span>
+      </div>
+
+      <div class="detail-item">
+        <span class="label">Fecha de registro</span>
+        <span class="value">{{ createdAt }}</span>
+      </div>
+    </div>
+  </div>
+</section>

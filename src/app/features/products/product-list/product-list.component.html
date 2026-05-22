@@ -1,0 +1,82 @@
+<div class="product-list-container">
+  <!-- Header -->
+  <div class="list-header">
+    <h2>Gestión de Productos</h2>
+    <button class="btn-primary" (click)="onNew()">
+      <i class="ion-plus"></i> Nuevo Producto
+    </button>
+  </div>
+
+  <!-- Alert -->
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input 
+      type="text" 
+      placeholder="Buscar por nombre..."
+      (input)="search($event.target.value)"
+    >
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando productos...</p>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && filteredProducts.length > 0" class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Unidad</th>
+          <th>Producción Propia</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let product of filteredProducts">
+          <td>{{ product.productId }}</td>
+          <td>{{ product.name }}</td>
+          <td>{{ product.categoryId }}</td>
+          <td>{{ product.unitMeasure }}</td>
+          <td>{{ product.isOwnProduction ? 'Sí' : 'No' }}</td>
+          <td>
+            <span [class.active]="product.isActive" [class.inactive]="!product.isActive">
+              {{ product.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-small btn-edit" (click)="onEdit(product)" title="Editar">
+              <i class="ion-edit"></i>
+            </button>
+            <button class="btn-small btn-delete" (click)="onDelete(product)" title="Eliminar">
+              <i class="ion-trash-a"></i>
+            </button>
+            <button *ngIf="!product.isActive" class="btn-small btn-restore" (click)="onRestore(product)" title="Restaurar">
+              <i class="ion-refresh"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredProducts.length === 0" class="empty-state">
+    <p>No hay productos para mostrar</p>
+  </div>
+
+  <!-- Form Modal -->
+  <app-product-form 
+    *ngIf="showForm"
+    [product]="selectedProduct"
+    [isEditing]="isEditing"
+    (saved)="onFormSaved($event)"
+    (closed)="onFormClosed()"
+  ></app-product-form>
+</div>

@@ -1,0 +1,1 @@
+export * from '../../features/admin/layout/admin-layout.component';

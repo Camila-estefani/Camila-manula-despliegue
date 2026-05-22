@@ -1,0 +1,296 @@
+<div class="admin-orders-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Panel administrativo</span>
+      <h1>Gestión de Pedidos</h1>
+      <p>Supervisión, análisis y auditoría sobre ORDERS, ORDER_DETAILS, CLIENTS, PRODUCTS y AUDIT_LOG.</p>
+    </div>
+
+    <button class="action-primary" type="button" (click)="openForm()">
+      Crear pedido
+    </button>
+
+    <button class="action-secondary" type="button" (click)="downloadReport()">
+      Descargar reporte
+    </button>
+  </section>
+
+  <section class="stats-grid">
+    <article class="mini-card accent-blue">
+      <span>Total de pedidos</span>
+      <strong>{{ totalOrders }}</strong>
+    </article>
+    <article class="mini-card accent-amber">
+      <span>Pedidos pendientes</span>
+      <strong>{{ pendingOrders }}</strong>
+    </article>
+    <article class="mini-card accent-sky">
+      <span>Pedidos procesados</span>
+      <strong>{{ processedOrders }}</strong>
+    </article>
+    <article class="mini-card accent-green">
+      <span>Pedidos entregados</span>
+      <strong>{{ deliveredOrders }}</strong>
+    </article>
+  </section>
+
+  <section class="analysis-grid">
+    <article class="analysis-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Análisis</span>
+          <h2>Productos más vendidos</h2>
+        </div>
+      </div>
+
+      <div class="chart-shell horizontal-bars">
+        <div class="chart-bar-row product-row" *ngFor="let item of topProducts">
+          <div class="chart-label product-label">
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.category }}</span>
+          </div>
+          <div class="chart-bar-track">
+            <div class="chart-bar-fill product-fill" [style.width.%]="getTopProductWidth(item.totalKg)"></div>
+          </div>
+          <div class="chart-value">{{ item.totalKg | number:'1.0-0' }} kg</div>
+        </div>
+      </div>
+
+      <div class="legend-line">
+        <span>Orden descendente por cantidad vendida</span>
+      </div>
+    </article>
+
+    <article class="analysis-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Análisis</span>
+          <h2>Ventas por mes</h2>
+        </div>
+      </div>
+
+      <div class="chart-shell">
+        <div class="monthly-chart">
+          <div class="monthly-chart-axis">
+            <span>Pedidos</span>
+            <span>Volumen kg</span>
+          </div>
+
+          <div class="monthly-chart-row" *ngFor="let item of salesByMonth">
+            <div class="chart-label">
+              <strong>{{ item.month }}</strong>
+              <span>{{ item.totalOrders }} pedidos</span>
+            </div>
+            <div class="monthly-bars">
+              <div class="monthly-bar order-bar" [style.height.%]="item.totalOrders * 20"></div>
+              <div class="monthly-bar kg-bar" [style.height.%]="getMonthlyBarWidth(item.totalKg)"></div>
+            </div>
+            <div class="chart-value">{{ item.totalKg | number:'1.0-0' }} kg</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend-line two-legend">
+        <span><i class="legend-dot legend-orders"></i>Pedidos</span>
+        <span><i class="legend-dot legend-kg"></i>Volumen kg</span>
+      </div>
+    </article>
+
+    <article class="analysis-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Análisis</span>
+          <h2>Distribución por categoría</h2>
+        </div>
+      </div>
+
+      <div class="chart-shell percentage-bars">
+        <div class="percentage-row" *ngFor="let item of categoryDistribution">
+          <div class="chart-label product-label">
+            <strong>{{ item.category }}</strong>
+            <span>{{ item.totalKg | number:'1.0-0' }} kg vendidos</span>
+          </div>
+          <div class="chart-bar-track">
+            <div class="chart-bar-fill category-fill" [style.width.%]="item.percentage"></div>
+          </div>
+          <div class="chart-value">{{ item.percentage }}%</div>
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <i class="ion-search"></i>
+      <input
+        type="text"
+        [value]="searchTerm"
+        placeholder="Buscar por código o cliente"
+        (input)="onSearchChange($event)"
+      />
+    </div>
+
+    <select class="filter-select" [value]="clientFilter" (change)="onClientFilterChange($any($event.target).value)">
+      <option value="ALL">Todos los clientes</option>
+      <option *ngFor="let client of clients" [value]="client.clientId">{{ client.companyName }}</option>
+    </select>
+
+    <select class="filter-select" [value]="statusFilter" (change)="onStatusFilterChange($any($event.target).value)">
+      <option value="ALL">Todos los estados</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="Procesado">Procesado</option>
+      <option value="Entregado">Entregado</option>
+    </select>
+
+    <button type="button" class="action-secondary" (click)="resetFilters()">Limpiar</button>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Incoterm</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of filteredOrders; trackBy: trackByOrder">
+            <td class="cell-code">{{ order.orderCode }}</td>
+            <td class="cell-client">{{ order.clientName }}</td>
+            <td class="cell-date">{{ order.orderDate | date:'dd/MM/yyyy' }}</td>
+            <td>{{ order.incoterm }}</td>
+            <td>
+              <span class="status-badge" [class.status-pendiente]="order.status === 'Pendiente'" [class.status-procesado]="order.status === 'Procesado'" [class.status-entregado]="order.status === 'Entregado'">
+                {{ order.status }}
+              </span>
+            </td>
+            <td class="cell-actions">
+              <div class="action-group">
+                <button type="button" class="btn-action" (click)="openDetail(order)">Ver</button>
+                <button type="button" class="btn-action" (click)="editOrder(order)">Editar</button>
+                <button type="button" class="btn-action" (click)="downloadOrder(order.orderId)">Descargar PDF</button>
+                <button type="button" class="btn-action danger" (click)="deleteOrder(order.orderId)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="filteredOrders.length === 0" class="empty-state">
+        <i class="ion-document-text"></i>
+        <h3>No se encontraron pedidos</h3>
+        <p>Prueba con otros filtros o crea un pedido nuevo para poblar la vista.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeForm()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Formulario</span>
+          <h2>{{ modalTitle }}</h2>
+        </div>
+        <button class="modal-close" type="button" (click)="closeForm()">Cancelar</button>
+      </div>
+
+      <form [formGroup]="orderForm" (ngSubmit)="saveOrder()" class="modal-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Cliente</label>
+            <select formControlName="clientId">
+              <option value="">Seleccione un cliente</option>
+              <option *ngFor="let client of clients" [value]="client.clientId">{{ client.companyName }}</option>
+            </select>
+            <small class="error" *ngIf="getError('clientId')">{{ getError('clientId') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Código de pedido</label>
+            <input type="text" formControlName="orderCode" placeholder="ORD-001">
+            <small class="error" *ngIf="getError('orderCode')">{{ getError('orderCode') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha de pedido</label>
+            <input type="date" formControlName="orderDate">
+            <small class="error" *ngIf="getError('orderDate')">{{ getError('orderDate') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Incoterm</label>
+            <select formControlName="incoterm">
+              <option value="">Seleccione</option>
+              <option value="EXW">EXW</option>
+              <option value="FOB">FOB</option>
+              <option value="CIF">CIF</option>
+            </select>
+            <small class="error" *ngIf="getError('incoterm')">{{ getError('incoterm') }}</small>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label>Estado</label>
+            <select formControlName="status">
+              <option value="Pendiente">Pendiente</option>
+              <option value="Procesado">Procesado</option>
+              <option value="Entregado">Entregado</option>
+            </select>
+            <small class="error" *ngIf="getError('status')">{{ getError('status') }}</small>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="action-secondary" (click)="closeForm()">Cancelar</button>
+          <button type="submit" class="action-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="selectedOrder" (click)="closeDetail()">
+    <div class="modal-card detail-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Detalle</span>
+          <h2>Pedido {{ selectedOrder.orderCode }}</h2>
+        </div>
+        <button class="modal-close" type="button" (click)="closeDetail()">Cerrar</button>
+      </div>
+
+      <div class="detail-grid">
+        <section class="detail-panel">
+          <h3>Información del pedido</h3>
+          <div class="detail-list">
+            <div><span>Cliente</span><strong>{{ selectedOrder.clientName }}</strong></div>
+            <div><span>Código</span><strong>{{ selectedOrder.orderCode }}</strong></div>
+            <div><span>Fecha</span><strong>{{ selectedOrder.orderDate | date:'dd/MM/yyyy' }}</strong></div>
+            <div><span>Incoterm</span><strong>{{ selectedOrder.incoterm }}</strong></div>
+            <div><span>Estado</span><strong>{{ selectedOrder.status }}</strong></div>
+            <div><span>Total estimado</span><strong>{{ getDetailTotal(selectedOrder) | number:'1.2-2' }}</strong></div>
+            <div><span>Creado</span><strong>{{ selectedOrder.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+            <div><span>Actualizado</span><strong>{{ selectedOrder.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+          </div>
+
+          <div class="detail-subsection">
+            <h4>Detalle de productos</h4>
+            <div class="detail-line-list">
+              <div class="detail-line-item" *ngFor="let item of selectedOrder.orderDetails">
+                <strong>{{ item.productName }}</strong>
+                <span>Cantidad: {{ item.quantityKg | number:'1.0-2' }} kg</span>
+                <span>Precio unitario: {{ item.unitPrice | number:'1.2-2' }}</span>
+                <span>Total: {{ item.lineTotal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1 @@
+export * from '../products/admin-product-list.component';

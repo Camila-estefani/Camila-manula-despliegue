@@ -1,0 +1,377 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { Customer } from '../../../core/models/customer.model';
+import { Product } from '../../../core/models/product.model';
+import { Provider } from '../../../core/models/provider.model';
+import { Category } from '../../../core/models/category.model';
+import { CustomerService } from '../../../core/services/customer.service';
+import { ProductService } from '../../../core/services/product.service';
+import { ProviderService } from '../../../core/services/provider.service';
+import { CategoryService } from '../../../core/services/category.service';
+import { AdminUsersService } from '../users/admin-users.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { Router } from '@angular/router';
+import { AdminUser } from '../users/admin-users.models';
+
+type ChartMode = 'products' | 'clients' | 'monthly';
+
+interface StatCard {
+  title: string;
+  value: number;
+  code: string;
+  color: string;
+  background: string;
+}
+
+interface TopItem {
+  label: string;
+  value: number;
+  detail: string;
+}
+
+interface MonthlyPoint {
+  month: string;
+  total: number;
+}
+
+interface ActivityItem {
+  source: string;
+  action: string;
+  details: string;
+  date: string;
+}
+
+interface QuickAccessItem {
+  title: string;
+  description: string;
+  route: string;
+  code: string;
+}
+
+@Component({
+  selector: 'app-admin-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './admin-dashboard.component.html',
+  styleUrls: ['./admin-dashboard.component.css']
+})
+export class AdminDashboardComponent implements OnInit {
+  currentUser = 'Administrador';
+  chartMode: ChartMode = 'products';
+  loading = true;
+
+  stats: StatCard[] = [
+    {
+      title: 'Usuarios activos',
+      value: 0,
+      code: 'US',
+      color: '#2563eb',
+      background: '#eff6ff'
+    },
+    {
+      title: 'Productos activos',
+      value: 0,
+      code: 'PR',
+      color: '#059669',
+      background: '#ecfdf5'
+    },
+    {
+      title: 'Pedidos del mes',
+      value: 0,
+      code: 'PE',
+      color: '#d97706',
+      background: '#fffbeb'
+    },
+    {
+      title: 'Proveedores activos',
+      value: 0,
+      code: 'PV',
+      color: '#7c3aed',
+      background: '#f5f3ff'
+    }
+  ];
+
+  topProducts: TopItem[] = [];
+
+  topClients: TopItem[] = [];
+
+  monthlyOrders: MonthlyPoint[] = [];
+
+  categoryDistribution: Array<{ category: string; percentage: number; totalKg: number }> = [];
+
+  activities: ActivityItem[] = [];
+
+  quickAccess: QuickAccessItem[] = [
+    { title: 'Usuarios', description: 'Gestión y control de accesos', route: '/admin/users', code: 'US' },
+    { title: 'Productos', description: 'Supervisión de catálogo', route: '/admin/products', code: 'PR' },
+    { title: 'Pedidos', description: 'Seguimiento y control operativo', route: '/admin/orders', code: 'PE' },
+    { title: 'Proveedores', description: 'Monitoreo de abastecimiento', route: '/admin/providers', code: 'PV' }
+  ];
+
+  private readonly ordersApiUrl = `${environment.apiUrl}/api/orders`;
+  private readonly months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+
+  getCardStyle(stat: StatCard): Record<string, string> {
+    return {
+      'background-color': stat.background,
+      color: stat.color
+    };
+  }
+
+  getActivityLabel(source: string): string {
+    return source;
+  }
+
+  constructor(
+    private readonly adminUsersService: AdminUsersService,
+    private readonly customerService: CustomerService,
+    private readonly productService: ProductService,
+    private readonly providerService: ProviderService,
+    private readonly categoryService: CategoryService,
+    private readonly http: HttpClient,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+    const display = this.authService.getDisplayName();
+    if (display) {
+      this.currentUser = display;
+    }
+  }
+
+  logout(): void {
+    this.authService.logout();
+    // redirect to homepage
+    this.router.navigateByUrl('/');
+  }
+
+  private loadDashboardData(): void {
+    this.loading = true;
+
+    forkJoin({
+      users: this.adminUsersService.getUsers(),
+      customers: this.customerService.getAllCustomers(),
+      products: this.productService.getAllProducts(),
+      providers: this.providerService.getAllProviders(),
+      categories: this.categoryService.getAllCategories(),
+      orders: this.http.get<any[]>(this.ordersApiUrl)
+    }).subscribe({
+      next: ({ users, customers, products, providers, categories, orders }) => {
+        this.applyRealData(users ?? [], customers ?? [], products ?? [], providers ?? [], categories ?? [], orders ?? []);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading admin dashboard data', error);
+        this.loading = false;
+        this.activities = [
+          {
+            source: 'ERROR',
+            action: 'CARGA',
+            details: 'No se pudieron cargar los datos reales del backend',
+            date: new Date().toISOString()
+          }
+        ];
+      }
+    });
+  }
+
+  private applyRealData(
+    users: AdminUser[],
+    customers: Customer[],
+    products: Product[],
+    providers: Provider[],
+    categories: Category[],
+    orders: Array<{ clientId: number; clientName: string; orderCode: string; orderDate: string; status: string; incoterm: string }>
+  ): void {
+    const activeUsers = users.filter((user) => user.active).length;
+    const activeProducts = products.filter((product) => product.isActive).length;
+    const activeProviders = providers.filter((provider) => provider.isActive).length;
+    const currentMonthOrders = orders.filter((order) => this.isCurrentMonth(order.orderDate)).length;
+
+    this.stats = [
+      {
+        title: 'Usuarios activos',
+        value: activeUsers,
+        code: 'US',
+        color: '#2563eb',
+        background: '#eff6ff'
+      },
+      {
+        title: 'Productos activos',
+        value: activeProducts,
+        code: 'PR',
+        color: '#059669',
+        background: '#ecfdf5'
+      },
+      {
+        title: 'Pedidos del mes',
+        value: currentMonthOrders,
+        code: 'PE',
+        color: '#d97706',
+        background: '#fffbeb'
+      },
+      {
+        title: 'Proveedores activos',
+        value: activeProviders,
+        code: 'PV',
+        color: '#7c3aed',
+        background: '#f5f3ff'
+      }
+    ];
+
+    this.topProducts = this.buildProductHighlights(products, categories);
+    this.topClients = this.buildClientRanking(orders);
+    this.monthlyOrders = this.buildMonthlyOrders(orders);
+    this.categoryDistribution = this.buildCategoryDistribution(products, categories);
+    this.activities = this.buildRecentActivities(products, orders, customers, providers);
+  }
+
+  private buildProductHighlights(products: Product[], categories: Category[]): TopItem[] {
+    const categoryNameById = new Map<number, string>(categories.map((category) => [category.categoryId ?? 0, category.name]));
+
+    return [...products]
+      .filter((product) => product.isActive)
+      .sort((left, right) => (right.boxWeightKg ?? 0) - (left.boxWeightKg ?? 0))
+      .slice(0, 4)
+      .map((product) => ({
+        label: product.name,
+        value: Number(product.boxWeightKg ?? 0),
+        detail: categoryNameById.get(product.categoryId) ?? 'Sin categoría'
+      }));
+  }
+
+  private buildClientRanking(orders: Array<{ clientId: number; clientName: string }>): TopItem[] {
+    const counts = new Map<string, number>();
+
+    orders.forEach((order) => {
+      const current = counts.get(order.clientName) ?? 0;
+      counts.set(order.clientName, current + 1);
+    });
+
+    return [...counts.entries()]
+      .map(([label, value]) => ({ label, value, detail: 'pedidos' }))
+      .sort((left, right) => right.value - left.value)
+      .slice(0, 4);
+  }
+
+  private buildMonthlyOrders(orders: Array<{ orderDate: string }>): MonthlyPoint[] {
+    const counts = new Map<string, number>();
+
+    orders.forEach((order) => {
+      const date = new Date(order.orderDate);
+      if (!Number.isNaN(date.getTime())) {
+        const month = this.months[date.getMonth()] ?? 'Otro';
+        counts.set(month, (counts.get(month) ?? 0) + 1);
+      }
+    });
+
+    return this.months.map((month) => ({
+      month,
+      total: counts.get(month) ?? 0
+    }));
+  }
+
+  private buildCategoryDistribution(products: Product[], categories: Category[]): Array<{ category: string; percentage: number; totalKg: number }> {
+    const categoryNameById = new Map<number, string>(categories.map((category) => [category.categoryId ?? 0, category.name]));
+    const counts = new Map<string, number>();
+
+    products.forEach((product) => {
+      const categoryName = categoryNameById.get(product.categoryId) ?? 'Sin categoría';
+      counts.set(categoryName, (counts.get(categoryName) ?? 0) + 1);
+    });
+
+    const total = [...counts.values()].reduce((sum, value) => sum + value, 0) || 1;
+
+    return [...counts.entries()]
+      .map(([category, count]) => ({
+        category,
+        percentage: Math.round((count / total) * 100),
+        totalKg: count
+      }))
+      .sort((left, right) => right.percentage - left.percentage)
+      .slice(0, 4);
+  }
+
+  private buildRecentActivities(
+    products: Product[],
+    orders: Array<{ clientName: string; orderCode: string; orderDate: string; status: string }>,
+    customers: Customer[],
+    providers: Provider[]
+  ): ActivityItem[] {
+    const productActivities = [...products]
+      .filter((product) => product.createdAt)
+      .sort((left, right) => new Date(String(right.createdAt)).getTime() - new Date(String(left.createdAt)).getTime())
+      .slice(0, 2)
+      .map((product) => ({
+        source: 'PRODUCTS',
+        action: 'Registro',
+        details: `Producto ${product.name} disponible en el catálogo`,
+        date: String(product.createdAt)
+      }));
+
+    const orderActivities = [...orders]
+      .sort((left, right) => new Date(right.orderDate).getTime() - new Date(left.orderDate).getTime())
+      .slice(0, 2)
+      .map((order) => ({
+        source: 'ORDERS',
+        action: 'Pedido',
+        details: `Pedido ${order.orderCode} para ${order.clientName}`,
+        date: order.orderDate
+      }));
+
+    const customerActivities = [...customers]
+      .filter((customer) => customer.createdAt)
+      .sort((left, right) => new Date(String(right.createdAt)).getTime() - new Date(String(left.createdAt)).getTime())
+      .slice(0, 1)
+      .map((customer) => ({
+        source: 'CLIENTS',
+        action: 'Cliente',
+        details: `Cliente ${customer.companyName} cargado desde la base de datos`,
+        date: String(customer.createdAt)
+      }));
+
+    const providerActivities = providers
+      .filter((provider) => provider.providerId !== undefined)
+      .slice(0, 1)
+      .map((provider) => ({
+        source: 'PROVIDERS',
+        action: 'Proveedor',
+        details: `Proveedor ${provider.companyName} disponible en el sistema`,
+        date: new Date().toISOString()
+      }));
+
+    return [...orderActivities, ...productActivities, ...customerActivities, ...providerActivities].slice(0, 4);
+  }
+
+  private isCurrentMonth(orderDate: string): boolean {
+    const date = new Date(orderDate);
+    const today = new Date();
+    return !Number.isNaN(date.getTime()) && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+  }
+
+  getTopMetricValue(items: TopItem[]): number {
+    return items[0]?.value ?? 0;
+  }
+
+  getMonthlyMax(): number {
+    return Math.max(...this.monthlyOrders.map((item) => item.total), 1);
+  }
+
+  getCategoryMax(): number {
+    return Math.max(...this.categoryDistribution.map((item) => item.percentage), 1);
+  }
+
+  getTopProductWidth(value: number): number {
+    return this.getTopMetricValue(this.topProducts) ? (value / this.getTopMetricValue(this.topProducts)) * 100 : 0;
+  }
+
+  getMonthlyBarWidth(value: number): number {
+    return this.getMonthlyMax() ? (value / this.getMonthlyMax()) * 100 : 0;
+  }
+}

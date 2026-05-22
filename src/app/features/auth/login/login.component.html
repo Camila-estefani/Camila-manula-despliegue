@@ -1,0 +1,59 @@
+<section class="login-shell">
+    <div class="login-hero">
+        <div class="brand-mark">VISONS</div>
+        <h1>Ingreso seguro por tipo de usuario</h1>
+        <p>
+            Cliente: correo Gmail + RUC. Trabajador y administrador: correo Gmail + DNI.
+        </p>
+
+        <div class="benefits">
+            <div>
+                <span>01</span>
+                <strong>Cliente</strong>
+                <p>Accede a pedidos y perfil con tu correo y tax_id.</p>
+            </div>
+            <div>
+                <span>02</span>
+                <strong>Trabajador</strong>
+                <p>Entra con correo institucional y tu DNI.</p>
+            </div>
+            <div>
+                <span>03</span>
+                <strong>Administrador</strong>
+                <p>Usa el mismo esquema del trabajador para entrar al panel.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-card">
+        <div class="card-header">
+            <p>Inicio de sesión</p>
+            <h2>Bienvenido de nuevo</h2>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="submit()" class="login-form" novalidate>
+            <label>
+        <span>Correo electrónico</span>
+                <input type="email" formControlName="username" placeholder="nombre@empresa.com" autocomplete="username" />
+                <small *ngIf="usernameControl?.touched && usernameControl?.hasError('required')">El correo electrónico es obligatorio.</small>
+                <small *ngIf="usernameControl?.touched && usernameControl?.hasError('email')">Ingresa un correo válido.</small>
+      </label>
+
+            <label>
+        <span>Contraseña</span>
+        <input type="password" formControlName="password" placeholder="DNI o tax_id" autocomplete="current-password" />
+                <small *ngIf="passwordControl?.touched && passwordControl?.hasError('required')">La contraseña es obligatoria.</small>
+                <small *ngIf="passwordControl?.touched && passwordControl?.hasError('minlength')">La contraseña debe tener al menos 3 caracteres.</small>
+      </label>
+
+            <div class="error-box" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
+
+                        <button type="submit" [disabled]="loading || loginForm.invalid">
+        <span *ngIf="!loading">Entrar</span>
+        <span *ngIf="loading">Validando...</span>
+      </button>
+        </form>
+    </div>
+</section>

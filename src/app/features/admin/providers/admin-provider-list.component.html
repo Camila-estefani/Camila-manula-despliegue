@@ -1,0 +1,250 @@
+<div class="admin-providers-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Panel administrativo</span>
+      <h1>Gestión de Proveedores</h1>
+      <p>Control, análisis y auditoría sobre PROVIDERS con relación indirecta a PURCHASES y PURCHASE_DETAILS.</p>
+    </div>
+
+    <button class="action-primary" type="button" (click)="openForm()">
+      Crear proveedor
+    </button>
+  </section>
+
+  <section class="stats-grid">
+    <article class="mini-card accent-blue">
+      <span>Total proveedores</span>
+      <strong>{{ totalProviders }}</strong>
+    </article>
+    <article class="mini-card accent-green">
+      <span>Proveedores activos</span>
+      <strong>{{ activeProviders }}</strong>
+    </article>
+    <article class="mini-card accent-violet">
+      <span>Proveedores con más compras</span>
+      <strong>{{ topProvidersCount }}</strong>
+    </article>
+  </section>
+
+  <section class="analysis-grid">
+    <article class="analysis-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Análisis</span>
+          <h2>Proveedores con mayor volumen comprado</h2>
+        </div>
+      </div>
+
+      <div class="analysis-list">
+        <div class="analysis-row" *ngFor="let item of topProvidersByVolume; let index = index">
+          <div class="analysis-label">
+            <strong>{{ index + 1 }}. {{ item.companyName }}</strong>
+            <span>{{ item.label }}</span>
+          </div>
+          <div class="analysis-track">
+            <div class="analysis-fill" [style.width.%]="maxVolumeValue ? (item.value / maxVolumeValue) * 100 : 0"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="analysis-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Análisis</span>
+          <h2>Proveedores con mayor monto generado</h2>
+        </div>
+      </div>
+
+      <div class="analysis-list">
+        <div class="analysis-row" *ngFor="let item of topProvidersByAmount; let index = index">
+          <div class="analysis-label">
+            <strong>{{ index + 1 }}. {{ item.companyName }}</strong>
+            <span>{{ item.label }}</span>
+          </div>
+          <div class="analysis-track">
+            <div class="analysis-fill amount-fill" [style.width.%]="maxAmountValue ? (item.value / maxAmountValue) * 100 : 0"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <i class="ion-search"></i>
+      <input
+        type="text"
+        [value]="searchTerm"
+        placeholder="Buscar por empresa, RUC o tipo de producto"
+        (input)="onSearchChange($event)"
+      />
+    </div>
+
+    <select class="filter-select" [value]="statusFilter" (change)="onStatusFilterChange($any($event.target).value)">
+      <option value="ALL">Todos los estados</option>
+      <option value="ACTIVE">Activos</option>
+      <option value="INACTIVE">Inactivos</option>
+    </select>
+
+    <button type="button" class="action-secondary" (click)="resetFilters()">Limpiar</button>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table class="providers-table">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>RUC</th>
+            <th>Tipo de producto</th>
+            <th>Total compras</th>
+            <th>Volumen total</th>
+            <th>Monto total</th>
+            <th>Última compra</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let provider of filteredProviders; trackBy: trackByProvider">
+            <td class="cell-name">
+              <div class="primary-cell">
+                <strong>{{ provider.companyName }}</strong>
+                <span>{{ provider.mainProducts.join(', ') || 'Sin productos asociados' }}</span>
+              </div>
+            </td>
+            <td class="cell-taxid">{{ provider.taxId }}</td>
+            <td class="cell-product-type">{{ provider.productType }}</td>
+            <td>{{ provider.totalPurchases }}</td>
+            <td>{{ provider.totalVolumeKg | number:'1.0-2' }} kg</td>
+            <td>S/ {{ provider.totalAmount | number:'1.2-2' }}</td>
+            <td>{{ provider.lastPurchaseDate ? (provider.lastPurchaseDate | date:'dd/MM/yyyy') : 'N/D' }}</td>
+            <td>
+              <span class="status-badge" [class.status-activo]="provider.isActive" [class.status-inactivo]="!provider.isActive">
+                {{ provider.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="cell-actions">
+              <div class="action-group">
+                <button type="button" class="btn-action" (click)="openDetail(provider)">Ver detalle</button>
+                <button type="button" class="btn-action" *ngIf="provider.isActive" (click)="editProvider(provider)">Editar</button>
+                <button type="button" class="btn-action danger" *ngIf="provider.isActive" (click)="deleteProvider(provider.providerId)">Eliminar</button>
+                <button type="button" class="btn-action restore" *ngIf="!provider.isActive" (click)="toggleStatus(provider)">Reactivar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="filteredProviders.length === 0" class="empty-state">
+        <i class="ion-briefcase"></i>
+        <h3>No se encontraron proveedores</h3>
+        <p>Prueba con otros filtros o registra un nuevo proveedor.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeForm()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Formulario</span>
+          <h2>{{ modalTitle }}</h2>
+        </div>
+        <button class="modal-close" type="button" (click)="closeForm()">Cancelar</button>
+      </div>
+
+      <form [formGroup]="providerForm" (ngSubmit)="saveProvider()" class="modal-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Empresa</label>
+            <input type="text" formControlName="companyName" placeholder="Nombre de la empresa">
+            <small class="error" *ngIf="getError('companyName')">{{ getError('companyName') }}</small>
+          </div>
+          <div class="form-group">
+            <label>RUC</label>
+            <input type="text" formControlName="taxId" placeholder="RUC">
+            <small class="error" *ngIf="getError('taxId')">{{ getError('taxId') }}</small>
+          </div>
+          <div class="form-group form-group-full">
+            <label>Tipo de producto</label>
+            <input type="text" formControlName="productType" placeholder="Tipo de producto">
+            <small class="error" *ngIf="getError('productType')">{{ getError('productType') }}</small>
+          </div>
+          <div class="form-group">
+            <label>Correo de Contacto</label>
+            <input type="email" formControlName="contactEmail" placeholder="correo@empresa.com">
+            <small class="error" *ngIf="getError('contactEmail')">{{ getError('contactEmail') }}</small>
+          </div>
+          <div class="form-group">
+            <label>Teléfono de Contacto</label>
+            <input type="tel" formControlName="contactPhone" placeholder="+51 999 999 999">
+            <small class="error" *ngIf="getError('contactPhone')">{{ getError('contactPhone') }}</small>
+          </div>
+          <div class="form-group form-group-full">
+            <label>Dirección</label>
+            <textarea formControlName="address" placeholder="Dirección completa del proveedor" rows="3"></textarea>
+            <small class="error" *ngIf="getError('address')">{{ getError('address') }}</small>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="isActive">
+              Activo
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="action-secondary" (click)="closeForm()">Cancelar</button>
+          <button type="submit" class="action-primary">Guardar proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="detailModalOpen && selectedProvider" (click)="closeDetail()">
+    <div class="modal-card detail-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Detalle</span>
+          <h2>{{ detailTitle }}</h2>
+        </div>
+        <button class="modal-close" type="button" (click)="closeDetail()">Cerrar</button>
+      </div>
+
+      <div class="detail-grid">
+        <section class="detail-panel">
+          <h3>Información del proveedor</h3>
+          <div class="detail-list">
+            <div><span>Empresa</span><strong>{{ selectedProvider.companyName }}</strong></div>
+            <div><span>RUC</span><strong>{{ selectedProvider.taxId }}</strong></div>
+            <div><span>Tipo de producto</span><strong>{{ selectedProvider.productType }}</strong></div>
+            <div><span>Estado</span><strong>{{ selectedProvider.isActive ? 'Activo' : 'Inactivo' }}</strong></div>
+            <div><span>Creado</span><strong>{{ selectedProvider.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+            <div><span>Actualizado</span><strong>{{ selectedProvider.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+            <div><span>Compras</span><strong>{{ selectedProvider.totalPurchases }}</strong></div>
+            <div><span>Última compra</span><strong>{{ selectedProvider.lastPurchaseDate ? (selectedProvider.lastPurchaseDate | date:'dd/MM/yyyy HH:mm') : 'N/D' }}</strong></div>
+          </div>
+
+          <div class="detail-subsection">
+            <h4>Indicadores de compras</h4>
+            <div class="detail-stats">
+              <div><span>Volumen total</span><strong>{{ selectedProvider.totalVolumeKg | number:'1.0-2' }} kg</strong></div>
+              <div><span>Monto total</span><strong>S/ {{ selectedProvider.totalAmount | number:'1.2-2' }}</strong></div>
+              <div><span>Participación</span><strong>{{ getProviderPurchaseShare(selectedProvider) }}%</strong></div>
+            </div>
+          </div>
+
+          <div class="detail-subsection">
+            <h4>Productos principales</h4>
+            <div class="chips-row">
+              <span class="chip" *ngFor="let product of selectedProvider.mainProducts">{{ product }}</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>

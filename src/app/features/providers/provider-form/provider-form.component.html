@@ -1,0 +1,119 @@
+<div class="modal-overlay" (click)="onCancel()" role="dialog">
+  <div class="modal-content" (click)="$event.stopPropagation()" role="document">
+    <div class="modal-header">
+      <h3>{{ isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h3>
+      <button class="btn-close" (click)="onCancel()">
+        <i class="ion-close"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+      <div class="form-group">
+        <label for="companyName">Nombre Empresa:</label>
+        <input 
+          id="companyName"
+          type="text" 
+          formControlName="companyName"
+          placeholder="Nombre de la empresa"
+          maxlength="200"
+        >
+        <span class="error" *ngIf="getErrorMessage('companyName')">
+          {{ getErrorMessage('companyName') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="taxId">RUT:</label>
+        <input 
+          id="taxId"
+          type="text" 
+          formControlName="taxId"
+          placeholder="RUT del proveedor"
+          inputmode="numeric"
+          maxlength="20"
+        >
+        <span class="error" *ngIf="getErrorMessage('taxId')">
+          {{ getErrorMessage('taxId') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="productType">Tipo de Producto:</label>
+        <input 
+          id="productType"
+          type="text" 
+          formControlName="productType"
+          placeholder="Ej. Frutas, Verduras"
+          maxlength="100"
+        >
+        <span class="error" *ngIf="getErrorMessage('productType')">
+          {{ getErrorMessage('productType') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="contactEmail">Correo de Contacto:</label>
+        <input 
+          id="contactEmail"
+          type="email" 
+          formControlName="contactEmail"
+          placeholder="correo@empresa.com"
+          maxlength="150"
+        >
+        <span class="error" *ngIf="getErrorMessage('contactEmail')">
+          {{ getErrorMessage('contactEmail') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="contactPhone">Teléfono de Contacto:</label>
+        <input 
+          id="contactPhone"
+          type="tel" 
+          formControlName="contactPhone"
+          placeholder="+51 999 999 999"
+          maxlength="20"
+        >
+        <span class="error" *ngIf="getErrorMessage('contactPhone')">
+          {{ getErrorMessage('contactPhone') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="address">Dirección:</label>
+        <textarea 
+          id="address"
+          formControlName="address"
+          placeholder="Dirección completa del proveedor"
+          rows="3"
+          maxlength="255"
+        ></textarea>
+        <span class="error" *ngIf="getErrorMessage('address')">
+          {{ getErrorMessage('address') }}
+        </span>
+      </div>
+
+      <div class="checkbox-group">
+        <label for="isActive">
+          <input 
+            id="isActive"
+            type="checkbox" 
+            formControlName="isActive"
+          >
+          Activo
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onCancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="!form.valid || loading">
+          {{ loading ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

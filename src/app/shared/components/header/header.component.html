@@ -1,0 +1,42 @@
+<header class="header">
+    <div class="header-left">
+        <div class="header-title">
+            <span class="header-pill"><i class="ion-briefcase"></i> Empleado</span>
+            <h1>Panel operativo</h1>
+        </div>
+    </div>
+
+    <div class="header-right">
+        <div class="header-meta">
+            <span class="meta-date"><i class="ion-calendar"></i> {{ today | date: 'dd/MM/yyyy' }}</span>
+            <span class="meta-role">{{ roleLabel }}</span>
+        </div>
+
+        <div class="user-profile">
+            <button class="user-btn" (click)="toggleUserMenu()">
+        <img class="avatar" src="https://ui-avatars.com/api/?name=AG&background=6676ff&color=fff&bold=true" alt="Usuario actual" />
+        <span>{{ displayName }}</span>
+        <i class="ion-chevron-down"></i>
+      </button>
+
+            <div *ngIf="userMenu" class="user-menu">
+                <div class="menu-item menu-label">
+                    <i class="ion-person"></i>
+                    <span>{{ displayName }}</span>
+                </div>
+                <div class="menu-item menu-label small">
+                    <i class="ion-bag"></i>
+                    <span>{{ roleLabel }}</span>
+                </div>
+                <hr>
+                <button type="button" class="menu-item" (click)="goToProfile()">
+                    <i class="ion-person"></i> Mi Perfil
+                </button>
+                <hr>
+                <button type="button" class="menu-item menu-button" (click)="logout()">
+                    <i class="ion-power"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,337 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
+
+type ProductStateFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+
+interface CategoryOption {
+  categoryId: number;
+  name: string;
+}
+
+interface ProductItem {
+  productId: number;
+  categoryId: number;
+  categoryName: string;
+  name: string;
+  variety: string;
+  caliber: string;
+  unitMeasure: string;
+  boxWeightKg: number;
+  isOwnProduction: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  restoredAt: string | null;
+}
+
+interface ProductFormValue {
+  categoryId: number | string;
+  name: string;
+  variety: string;
+  caliber: string;
+  unitMeasure: string;
+  boxWeightKg: number | string;
+  isOwnProduction: boolean;
+  isActive: boolean;
+}
+
+@Component({
+  selector: 'app-admin-product-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './admin-product-list.component.html',
+  styleUrls: ['./admin-product-list.component.css']
+})
+export class AdminProductListComponent implements OnInit {
+  products: ProductItem[] = [];
+  filteredProducts: ProductItem[] = [];
+  categories: CategoryOption[] = [];
+  productForm!: FormGroup;
+  isModalOpen = false;
+  detailModalOpen = false;
+  isEditing = false;
+  editingId: number | null = null;
+  modalTitle = 'Nuevo Producto';
+  detailTitle = 'Detalle del producto';
+  searchTerm = '';
+  categoryFilter: 'ALL' | number = 'ALL';
+  statusFilter: ProductStateFilter = 'ACTIVE';
+  selectedProduct: ProductItem | null = null;
+  private readonly productsApiUrl = `${environment.apiUrl}/v1/api/product`;
+  private readonly categoriesApiUrl = `${environment.apiUrl}/v1/api/category/active`;
+
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly http: HttpClient
+  ) {
+    this.initForm();
+  }
+
+  ngOnInit(): void {
+    this.loadCategories();
+    this.loadProducts();
+  }
+
+  private initForm(): void {
+    this.productForm = this.fb.group({
+      categoryId: [null, Validators.required],
+      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+      variety: ['', [Validators.required, Validators.maxLength(100)]],
+      caliber: ['', [Validators.required, Validators.maxLength(50)]],
+      unitMeasure: ['', [Validators.required, Validators.maxLength(20)]],
+      boxWeightKg: [0, [Validators.required, Validators.min(0)]],
+      isOwnProduction: [false],
+      isActive: [true]
+    });
+  }
+
+  get totalProducts(): number {
+    return this.products.length;
+  }
+
+  get activeProducts(): number {
+    return this.products.filter((product) => product.isActive).length;
+  }
+
+  get inactiveProducts(): number {
+    return this.products.filter((product) => !product.isActive).length;
+  }
+
+  private getCategoryName(categoryId: number): string {
+    return this.categories.find((category) => category.categoryId === categoryId)?.name ?? 'Sin categoría';
+  }
+
+  private loadCategories(): void {
+    this.http.get<CategoryOption[]>(this.categoriesApiUrl).subscribe({
+      next: (categories) => {
+        this.categories = categories ?? [];
+      },
+      error: (error) => {
+        console.error('Error loading categories', error);
+        this.categories = [];
+      }
+    });
+  }
+
+  loadProducts(): void {
+    this.http.get<any[]>(`${this.productsApiUrl}/`).subscribe({
+      next: (products) => {
+        this.products = (products ?? []).map((product) => ({
+          productId: product.productId,
+          categoryId: product.categoryId,
+          categoryName: this.getCategoryName(product.categoryId),
+          name: product.name,
+          variety: product.variety ?? '',
+          caliber: product.caliber ?? '',
+          unitMeasure: product.unitMeasure,
+          boxWeightKg: product.boxWeightKg ?? 0,
+          isOwnProduction: !!product.isOwnProduction,
+          isActive: !!product.isActive,
+          createdAt: product.createdAt ?? '',
+          updatedAt: product.updatedAt ?? '',
+          deletedAt: product.deletedAt ?? null,
+          restoredAt: product.restoredAt ?? null
+        }));
+        this.filterProducts();
+      },
+      error: (error) => {
+        console.error('Error loading products', error);
+        this.products = [];
+        this.filteredProducts = [];
+      }
+    });
+  }
+
+  filterProducts(): void {
+    const term = this.searchTerm.trim().toLowerCase();
+
+    this.filteredProducts = this.products.filter((product) => {
+      const matchesTerm = !term || product.name.toLowerCase().includes(term);
+      const matchesCategory = this.categoryFilter === 'ALL' || product.categoryId === this.categoryFilter;
+      const matchesStatus =
+        this.statusFilter === 'ALL' ||
+        (this.statusFilter === 'ACTIVE' && product.isActive) ||
+        (this.statusFilter === 'INACTIVE' && !product.isActive);
+
+      return matchesTerm && matchesCategory && matchesStatus;
+    });
+  }
+
+  onSearchChange(event: Event): void {
+    this.searchTerm = (event.target as HTMLInputElement).value;
+    this.filterProducts();
+  }
+
+  onCategoryFilterChange(value: string): void {
+    this.categoryFilter = value === 'ALL' ? 'ALL' : Number(value);
+    this.filterProducts();
+  }
+
+  onStatusFilterChange(value: string): void {
+    this.statusFilter = value as ProductStateFilter;
+    this.filterProducts();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.categoryFilter = 'ALL';
+    this.statusFilter = 'ACTIVE';
+    this.filterProducts();
+  }
+
+  openForm(): void {
+    this.isEditing = false;
+    this.editingId = null;
+    this.modalTitle = 'Nuevo Producto';
+    this.productForm.reset({
+      categoryId: this.categories[0]?.categoryId ?? null,
+      name: '',
+      variety: '',
+      caliber: '',
+      unitMeasure: 'KG',
+      boxWeightKg: 0,
+      isOwnProduction: false,
+      isActive: true
+    });
+    this.isModalOpen = true;
+  }
+
+  closeForm(): void {
+    this.isModalOpen = false;
+    this.productForm.markAsPristine();
+    this.productForm.markAsUntouched();
+  }
+
+  openDetail(product: ProductItem): void {
+    this.selectedProduct = product;
+    this.detailTitle = `Detalle del producto: ${product.name}`;
+    this.detailModalOpen = true;
+  }
+
+  closeDetail(): void {
+    this.detailModalOpen = false;
+    this.selectedProduct = null;
+  }
+
+  saveProduct(): void {
+    if (this.productForm.invalid) {
+      this.productForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.productForm.getRawValue() as ProductFormValue;
+    const categoryId = Number(formValue.categoryId);
+
+    if (this.isEditing && this.editingId !== null) {
+      const payload = {
+        categoryId,
+        name: formValue.name.trim(),
+        variety: formValue.variety.trim(),
+        caliber: formValue.caliber.trim(),
+        unitMeasure: formValue.unitMeasure,
+        boxWeightKg: Number(formValue.boxWeightKg),
+        isOwnProduction: !!formValue.isOwnProduction,
+        isActive: !!formValue.isActive
+      };
+
+      this.http.patch(`${this.productsApiUrl}/update/${this.editingId}`, payload).subscribe({
+        next: () => this.loadProducts(),
+        error: (error) => console.error('Error updating product', error)
+      });
+    } else {
+      const payload = {
+        categoryId,
+        name: formValue.name.trim(),
+        variety: formValue.variety.trim(),
+        caliber: formValue.caliber.trim(),
+        unitMeasure: formValue.unitMeasure,
+        boxWeightKg: Number(formValue.boxWeightKg),
+        isOwnProduction: !!formValue.isOwnProduction,
+        isActive: !!formValue.isActive
+      };
+
+      this.http.post(`${this.productsApiUrl}/save`, payload).subscribe({
+        next: () => this.loadProducts(),
+        error: (error) => console.error('Error creating product', error)
+      });
+    }
+
+    this.closeForm();
+    this.filterProducts();
+  }
+
+  editProduct(product: ProductItem): void {
+    this.isEditing = true;
+    this.editingId = product.productId;
+    this.modalTitle = 'Editar Producto';
+    this.productForm.patchValue({
+      categoryId: product.categoryId,
+      name: product.name,
+      variety: product.variety,
+      caliber: product.caliber,
+      unitMeasure: product.unitMeasure,
+      boxWeightKg: product.boxWeightKg,
+      isOwnProduction: product.isOwnProduction,
+      isActive: product.isActive
+    });
+    this.isModalOpen = true;
+  }
+
+  deleteProduct(id: number): void {
+    const product = this.products.find(p => p.productId === id);
+    if (product && confirm(`¿Estás seguro de que deseas eliminar el producto "${product.name}"?`)) {
+      this.toggleProductStatus(product);
+    }
+  }
+
+  toggleProductStatus(product: ProductItem): void {
+    const request = product.isActive
+      ? this.http.delete(`${this.productsApiUrl}/${product.productId}`)
+      : this.http.post(`${this.productsApiUrl}/restore/${product.productId}`, {});
+
+    request.subscribe({
+      next: (response) => {
+        console.log('Status toggled successfully', response);
+        this.loadProducts();
+      },
+      error: (error) => {
+        console.error('Error toggling product status', error);
+        alert('Error al cambiar el estado del producto. Por favor intenta de nuevo.');
+      }
+    });
+  }
+
+  trackByProduct(_: number, item: ProductItem): number {
+    return item.productId;
+  }
+
+  getError(fieldName: string): string {
+    const control = this.productForm.get(fieldName);
+    if (!control || !control.errors || !control.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return 'Este campo es requerido';
+    }
+
+    if (control.errors['minlength']) {
+      return `Debe tener al menos ${control.errors['minlength'].requiredLength} caracteres`;
+    }
+
+    if (control.errors['maxlength']) {
+      return `No puede superar ${control.errors['maxlength'].requiredLength} caracteres`;
+    }
+
+    if (control.errors['min']) {
+      return 'El valor no puede ser negativo';
+    }
+
+    return 'Campo inválido';
+  }
+}

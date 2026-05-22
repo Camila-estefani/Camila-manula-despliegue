@@ -1,0 +1,287 @@
+<div class="client-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.sidebar-closed]="!sidebarOpen">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">VISONS</h1>
+      <button class="toggle-btn" (click)="toggleSidebar()" title="Alternar menú">
+        <span class="hamburger">☰</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="menu-list">
+        <li *ngFor="let item of menuItems"
+            [class.active]="activeRoute === item.route.split('/').pop()"
+            class="menu-item">
+          <a [routerLink]="item.route"
+             (click)="setActiveRoute(item.route.split('/').pop()!)"
+             class="menu-link">
+            <span class="menu-icon">{{ item.shortLabel }}</span>
+            <span class="menu-label" *ngIf="sidebarOpen">{{ item.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer" *ngIf="sidebarOpen">
+      <p class="version">v1.0.0</p>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-area">
+
+      <!-- Hero Card -->
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Panel de Clientes</span>
+          <h1>Mis Pedidos</h1>
+          <p>Consulta el estado de tus pedidos y su seguimiento en tiempo real.</p>
+        </div>
+        <button class="action-primary" type="button" (click)="toggleFormulario()">
+          + Nuevo Pedido
+        </button>
+      </section>
+
+      <!-- Error de carga -->
+      <div class="alert-error" *ngIf="errorCarga">
+        <span>⚠️</span>
+        <div>
+          <strong>Error de conexión</strong>
+          <p>{{ errorCarga }}</p>
+        </div>
+        <button class="btn-retry" (click)="cargarPedidos()">Reintentar</button>
+      </div>
+
+      <!-- Toolbar -->
+      <section class="toolbar-card">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Buscar por código, fecha, estado..."
+            [(ngModel)]="terminoBusqueda"
+            (ngModelChange)="filtrarPedidos()"
+          />
+          <button class="btn-clear" *ngIf="terminoBusqueda" (click)="terminoBusqueda=''; filtrarPedidos()">✕</button>
+        </div>
+        <div class="toolbar-info">
+          <span class="count-badge">{{ pedidosFiltrados.length }} pedido{{ pedidosFiltrados.length !== 1 ? 's' : '' }}</span>
+          <button class="btn-refresh" (click)="cargarPedidos()" title="Actualizar">🔄</button>
+        </div>
+      </section>
+
+      <!-- Cargando -->
+      <div class="loading-state" *ngIf="cargando">
+        <div class="spinner"></div>
+        <p>Cargando pedidos...</p>
+      </div>
+
+      <!-- Table Card -->
+      <section class="table-card" *ngIf="!cargando">
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Incoterm</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pedido of pedidosFiltrados" class="data-row">
+                <td><span class="cell-code">#{{ pedido.orderCode || pedido.orderId }}</span></td>
+                <td>{{ pedido.orderDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ pedido.clientName || '—' }}</td>
+                <td>
+                  <span class="incoterm-badge">{{ pedido.incoterm || '—' }}</span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(pedido.status)">
+                    {{ getStatusLabel(pedido.status) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-group">
+                    <button class="btn-action" title="Ver detalles" (click)="verDetalle(pedido)">👁️</button>
+                    <button class="btn-action" title="Descargar PDF" (click)="descargarPdf(pedido)">📥</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Estado vacío -->
+          <div *ngIf="pedidosFiltrados.length === 0 && !cargando" class="empty-state">
+            <span class="empty-icon">📭</span>
+            <p *ngIf="!terminoBusqueda">No hay pedidos registrados</p>
+            <p *ngIf="terminoBusqueda">Sin resultados para "{{ terminoBusqueda }}"</p>
+            <small *ngIf="!terminoBusqueda">Haz clic en "+ Nuevo Pedido" para crear tu primer pedido.</small>
+            <small *ngIf="terminoBusqueda">Intenta con otro término de búsqueda.</small>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ===== MODAL NUEVO PEDIDO ===== -->
+  <div class="modal-overlay" *ngIf="mostrarFormulario" (click)="toggleFormulario()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Formulario</span>
+          <h2 class="modal-title">Nuevo Pedido</h2>
+        </div>
+        <button class="modal-close" (click)="toggleFormulario()" type="button">✕ Cerrar</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Error -->
+        <div class="modal-alert-error" *ngIf="errorGuardar">
+          ⚠️ {{ errorGuardar }}
+        </div>
+
+        <!-- Producto -->
+        <div class="form-group">
+          <label class="form-label">Producto <span class="req">*</span></label>
+          <select class="form-input" [(ngModel)]="productoSeleccionado" [disabled]="cargandoProductos">
+            <option value="" disabled selected>
+              {{ cargandoProductos ? 'Cargando productos...' : 'Seleccionar producto...' }}
+            </option>
+            <option *ngFor="let p of productos" [value]="p.productId">
+              {{ p.name }} {{ p.variety ? '— ' + p.variety : '' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Cantidad -->
+        <div class="form-group">
+          <label class="form-label">Cantidad (KG) <span class="req">*</span></label>
+          <input
+            type="number"
+            class="form-input"
+            [(ngModel)]="cantidadIngresada"
+            placeholder="0.00"
+            min="0.001"
+            step="0.001"
+          />
+        </div>
+
+        <!-- Incoterm -->
+        <div class="form-group">
+          <label class="form-label">Incoterm</label>
+          <select class="form-input" [(ngModel)]="incotermSeleccionado">
+            <option *ngFor="let inc of incotermOpciones" [value]="inc">{{ inc }}</option>
+          </select>
+        </div>
+
+        <p class="form-hint">
+          💡 El pedido se registrará con estado <strong>Pendiente</strong> y será procesado por nuestro equipo.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-secondary" (click)="toggleFormulario()" type="button">Cancelar</button>
+        <button
+          class="action-primary"
+          (click)="agregarPedido()"
+          type="button"
+          [disabled]="guardando"
+        >
+          <span *ngIf="!guardando">Guardar Pedido</span>
+          <span *ngIf="guardando">Guardando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL DETALLE ===== -->
+  <div class="modal-overlay" *ngIf="mostrarDetalle" (click)="cerrarDetalle()">
+    <div class="modal-card modal-detalle" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Detalle del Pedido</span>
+          <h2 class="modal-title">{{ pedidoDetalle?.orderCode }}</h2>
+        </div>
+        <button class="modal-close" (click)="cerrarDetalle()" type="button">✕ Cerrar</button>
+      </div>
+
+      <div class="modal-body" *ngIf="pedidoDetalle">
+        <div class="detalle-grid">
+          <div class="detalle-item">
+            <span class="detalle-label">Código</span>
+            <span class="detalle-valor">{{ pedidoDetalle.orderCode || '—' }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="detalle-label">Fecha</span>
+            <span class="detalle-valor">{{ pedidoDetalle.orderDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="detalle-label">Cliente</span>
+            <span class="detalle-valor">{{ pedidoDetalle.clientName || '—' }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="detalle-label">Incoterm</span>
+            <span class="detalle-valor">
+              <span class="incoterm-badge">{{ pedidoDetalle.incoterm || '—' }}</span>
+            </span>
+          </div>
+          <div class="detalle-item detalle-full">
+            <span class="detalle-label">Estado actual</span>
+            <span class="detalle-valor">
+              <span class="status-badge" [ngClass]="getStatusClass(pedidoDetalle.status)">
+                {{ getStatusLabel(pedidoDetalle.status) }}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Timeline de estados -->
+        <div class="timeline-section">
+          <h4 class="timeline-title">Seguimiento del pedido</h4>
+          <div class="timeline">
+            <div class="timeline-step" [class.step-done]="true">
+              <div class="step-dot step-done-dot"></div>
+              <div class="step-info">
+                <span class="step-label">Pedido recibido</span>
+                <span class="step-date">{{ pedidoDetalle.orderDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+            <div class="timeline-step" [class.step-done]="pedidoDetalle.status === 'Processing' || pedidoDetalle.status === 'Completed'">
+              <div class="step-dot" [class.step-done-dot]="pedidoDetalle.status === 'Processing' || pedidoDetalle.status === 'Completed'" [class.step-pending-dot]="pedidoDetalle.status === 'Pending'"></div>
+              <div class="step-info">
+                <span class="step-label">En proceso</span>
+                <span class="step-date" *ngIf="pedidoDetalle.status === 'Processing' || pedidoDetalle.status === 'Completed'">En curso</span>
+                <span class="step-date" *ngIf="pedidoDetalle.status === 'Pending'">Pendiente</span>
+              </div>
+            </div>
+            <div class="timeline-step" [class.step-done]="pedidoDetalle.status === 'Completed'">
+              <div class="step-dot" [class.step-done-dot]="pedidoDetalle.status === 'Completed'" [class.step-pending-dot]="pedidoDetalle.status !== 'Completed'"></div>
+              <div class="step-info">
+                <span class="step-label">Completado</span>
+                <span class="step-date" *ngIf="pedidoDetalle.status === 'Completed'">Finalizado</span>
+                <span class="step-date" *ngIf="pedidoDetalle.status !== 'Completed'">Pendiente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-secondary" (click)="cerrarDetalle()">Cerrar</button>
+        <button class="action-primary" (click)="descargarPdf(pedidoDetalle!)" *ngIf="pedidoDetalle">
+          📥 Descargar PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

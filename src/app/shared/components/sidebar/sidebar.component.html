@@ -1,0 +1,52 @@
+<aside [class.sidebar-open]="isOpen" class="sidebar">
+    <div class="sidebar-header">
+        <div class="brand-block" *ngIf="isOpen">
+            <span class="brand-mark">AG</span>
+            <div>
+                <h2 class="logo">AGROSYS</h2>
+                <p>Panel de empleado</p>
+            </div>
+        </div>
+
+        <button class="toggle-btn" (click)="toggleSidebar()" type="button" aria-label="Alternar panel lateral">
+      <i class="ion-navicon-round"></i>
+    </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a routerLink="/panel/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
+            <i class="ion-pie-graph"></i>
+            <span *ngIf="isOpen">Dashboard</span>
+        </a>
+
+        <a routerLink="/panel/customers" routerLinkActive="active" class="nav-item">
+            <i class="ion-person-stalker"></i>
+            <span *ngIf="isOpen">Clientes</span>
+        </a>
+
+        <a routerLink="/panel/products" routerLinkActive="active" class="nav-item">
+            <i class="ion-leaf"></i>
+            <span *ngIf="isOpen">Productos</span>
+        </a>
+
+        <a routerLink="/panel/providers" routerLinkActive="active" class="nav-item">
+            <i class="ion-briefcase"></i>
+            <span *ngIf="isOpen">Proveedores</span>
+        </a>
+
+        <a routerLink="/panel/client-requests" routerLinkActive="active" class="nav-item">
+            <i class="ion-clipboard"></i>
+            <span *ngIf="isOpen">Solicitudes de clientes</span>
+        </a>
+
+        <a routerLink="/panel/orders-reception" routerLinkActive="active" class="nav-item">
+            <i class="ion-email"></i>
+            <span *ngIf="isOpen">Recepción de pedidos</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer" *ngIf="isOpen">
+        <p>&copy; 2024 AGROSYS</p>
+        <p>Sistema de gestión empresarial</p>
+    </div>
+</aside>

@@ -1,0 +1,1 @@
+export * from '../client-requests/admin-client-request-list.component';

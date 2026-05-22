@@ -1,0 +1,64 @@
+<section class="reception-page">
+  <div class="hero-card">
+    <div>
+      <p class="eyebrow">Recepción de pedidos</p>
+      <h1>Pedidos pendientes</h1>
+      <p>Gestiona las órdenes enviadas por clientes antes de que cambien su estado.</p>
+    </div>
+    <button type="button" class="refresh-btn" (click)="loadAllOrders()">Actualizar</button>
+  </div>
+
+  <div class="filter-card">
+    <label for="status-filter" class="filter-label">Filtrar por estado:</label>
+    <select 
+      id="status-filter" 
+      class="filter-select" 
+      [(ngModel)]="selectedStatus" 
+      (change)="onStatusChange()"
+    >
+      <option *ngFor="let opt of statusOptions" [value]="opt.value">
+        {{ opt.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="state-box error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="state-box loading" *ngIf="loading">
+    Cargando pedidos...
+  </div>
+
+  <div class="empty-box" *ngIf="!loading && orders.length === 0 && !errorMessage">
+    No hay pedidos con el filtro seleccionado.
+  </div>
+
+  <div class="orders-grid" *ngIf="!loading && orders.length > 0">
+    <article class="order-card" *ngFor="let order of orders">
+      <div class="order-head">
+        <div>
+          <span class="code">{{ order.orderCode }}</span>
+          <h2>{{ order.clientName }}</h2>
+        </div>
+        <span class="status" [ngClass]="'status-' + (order.status | lowercase)">
+          {{ order.status === 'Pending' ? 'Pendiente' : order.status === 'Completed' ? 'Aprobado' : order.status === 'Cancelled' ? 'Denegado' : order.status }}
+        </span>
+      </div>
+
+      <div class="meta-row">
+        <span><strong>Fecha:</strong> {{ order.orderDate | date:'dd/MM/yyyy' }}</span>
+        <span><strong>Incoterm:</strong> {{ order.incoterm || '—' }}</span>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-accept" (click)="accept(order)" [disabled]="processingId === order.orderId || order.status !== 'Pending'">
+          Aceptar
+        </button>
+        <button type="button" class="btn-reject" (click)="reject(order)" [disabled]="processingId === order.orderId || order.status !== 'Pending'">
+          Rechazar
+        </button>
+      </div>
+    </article>
+  </div>
+</section>

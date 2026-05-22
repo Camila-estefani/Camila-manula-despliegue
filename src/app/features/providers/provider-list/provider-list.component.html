@@ -1,0 +1,80 @@
+<div class="provider-list-container">
+  <!-- Header -->
+  <div class="list-header">
+    <h2>Gestión de Proveedores</h2>
+    <button class="btn-primary" (click)="onNew()">
+      <i class="ion-plus"></i> Nuevo Proveedor
+    </button>
+  </div>
+
+  <!-- Alert -->
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input 
+      type="text" 
+      placeholder="Buscar por nombre..."
+      (input)="search($event.target.value)"
+    >
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando proveedores...</p>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && filteredProviders.length > 0" class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre Empresa</th>
+          <th>RUT</th>
+          <th>Tipo Producto</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let provider of filteredProviders">
+          <td>{{ provider.providerId }}</td>
+          <td>{{ provider.companyName }}</td>
+          <td>{{ provider.taxId }}</td>
+          <td>{{ provider.productType }}</td>
+          <td>
+            <span [class.active]="provider.isActive" [class.inactive]="!provider.isActive">
+              {{ provider.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-small btn-edit" (click)="onEdit(provider)" title="Editar">
+              <i class="ion-edit"></i>
+            </button>
+            <button class="btn-small btn-delete" (click)="onDelete(provider)" title="Eliminar">
+              <i class="ion-trash-a"></i>
+            </button>
+            <button *ngIf="!provider.isActive" class="btn-small btn-restore" (click)="onRestore(provider)" title="Restaurar">
+              <i class="ion-refresh"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredProviders.length === 0" class="empty-state">
+    <p>No hay proveedores para mostrar</p>
+  </div>
+
+  <!-- Form Modal -->
+  <app-provider-form 
+    *ngIf="showForm"
+    [provider]="selectedProvider"
+    [isEditing]="isEditing"
+    (saved)="onFormSaved($event)"
+    (closed)="onFormClosed()"
+  ></app-provider-form>
+</div>

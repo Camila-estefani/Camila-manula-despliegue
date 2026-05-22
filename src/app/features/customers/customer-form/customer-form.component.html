@@ -1,0 +1,140 @@
+<div class="modal-overlay" (click)="onCancel()" role="dialog" aria-modal="true">
+  <div class="modal-content" (click)="$event.stopPropagation()" role="document">
+    <div class="modal-header">
+      <h3>{{ isEditing ? 'Editar Cliente' : 'Nuevo Cliente' }}</h3>
+      <button class="btn-close" type="button" (click)="onCancel()" aria-label="Cerrar formulario">
+        <i class="ion-close"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body" novalidate>
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+      <div class="form-group">
+        <label for="companyName">Empresa:</label>
+        <input
+          id="companyName"
+          type="text"
+          formControlName="companyName"
+          placeholder="Nombre de la empresa"
+          maxlength="200"
+        >
+        <span class="error" *ngIf="getErrorMessage('companyName')">
+          {{ getErrorMessage('companyName') }}
+        </span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="taxId">RUC / TAX ID:</label>
+          <input
+            id="taxId"
+            type="text"
+            formControlName="taxId"
+            placeholder="20123456789"
+            inputmode="numeric"
+            maxlength="20"
+          >
+          <span class="error" *ngIf="getErrorMessage('taxId')">
+            {{ getErrorMessage('taxId') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="country">País:</label>
+          <input
+            id="country"
+            type="text"
+            formControlName="country"
+            placeholder="Perú"
+            maxlength="100"
+          >
+          <span class="error" *ngIf="getErrorMessage('country')">
+            {{ getErrorMessage('country') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="contacto@empresa.com"
+            maxlength="150"
+          >
+          <span class="error" *ngIf="getErrorMessage('email')">
+            {{ getErrorMessage('email') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Teléfono:</label>
+          <input
+            id="phone"
+            type="text"
+            formControlName="phone"
+            placeholder="+51 999 999 999"
+            maxlength="20"
+          >
+          <span class="error" *ngIf="getErrorMessage('phone')">
+            {{ getErrorMessage('phone') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="address">Dirección:</label>
+        <textarea
+          id="address"
+          formControlName="address"
+          placeholder="Dirección fiscal o punto de contacto"
+          maxlength="255"
+          rows="3"
+        ></textarea>
+        <span class="error" *ngIf="getErrorMessage('address')">
+          {{ getErrorMessage('address') }}
+        </span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="creditLimit">Límite de crédito:</label>
+          <input
+            id="creditLimit"
+            type="number"
+            formControlName="creditLimit"
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+          >
+          <span class="error" *ngIf="getErrorMessage('creditLimit')">
+            {{ getErrorMessage('creditLimit') }}
+          </span>
+        </div>
+
+        <div class="checkbox-group">
+          <label for="isActive">
+            <input
+              id="isActive"
+              type="checkbox"
+              formControlName="isActive"
+            >
+            Activo
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onCancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="!form.valid || loading">
+          {{ loading ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

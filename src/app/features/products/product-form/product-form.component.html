@@ -1,0 +1,136 @@
+<div class="modal-overlay" (click)="onCancel()" role="dialog">
+  <div class="modal-content" (click)="$event.stopPropagation()" role="document">
+    <div class="modal-header">
+      <h3>{{ isEditing ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
+      <button class="btn-close" (click)="onCancel()">
+        <i class="ion-close"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+      <div class="form-group">
+        <label for="categoryId">Categoría:</label>
+        <select 
+          id="categoryId"
+          formControlName="categoryId"
+          [disabled]="loadingCategories"
+        >
+          <option value="">-- Selecciona una categoría --</option>
+          <option *ngFor="let category of categories" [value]="category.categoryId">
+            {{ category.name }}
+          </option>
+        </select>
+        <span class="error" *ngIf="getErrorMessage('categoryId')">
+          {{ getErrorMessage('categoryId') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Nombre:</label>
+        <input 
+          id="name"
+          type="text" 
+          formControlName="name"
+          placeholder="Nombre del producto"
+          maxlength="150"
+        >
+        <span class="error" *ngIf="getErrorMessage('name')">
+          {{ getErrorMessage('name') }}
+        </span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="variety">Variedad:</label>
+          <input 
+            id="variety"
+            type="text" 
+            formControlName="variety"
+            placeholder="Ej. Red, Green"
+            maxlength="100"
+          >
+          <span class="error" *ngIf="getErrorMessage('variety')">
+            {{ getErrorMessage('variety') }}
+          </span>
+        </div>
+        <div class="form-group">
+          <label for="caliber">Calibre:</label>
+          <input 
+            id="caliber"
+            type="text" 
+            formControlName="caliber"
+            placeholder="Ej. Small, Medium"
+            maxlength="50"
+          >
+          <span class="error" *ngIf="getErrorMessage('caliber')">
+            {{ getErrorMessage('caliber') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="unitMeasure">Unidad de Medida:</label>
+          <input 
+            id="unitMeasure"
+            type="text" 
+            formControlName="unitMeasure"
+            placeholder="Ej. kg, box"
+            maxlength="20"
+          >
+          <span class="error" *ngIf="getErrorMessage('unitMeasure')">
+            {{ getErrorMessage('unitMeasure') }}
+          </span>
+        </div>
+        <div class="form-group">
+          <label for="boxWeightKg">Peso Caja (kg):</label>
+          <input 
+            id="boxWeightKg"
+            type="number" 
+            formControlName="boxWeightKg"
+            placeholder="0"
+            min="0"
+            step="0.01"
+          >
+          <span class="error" *ngIf="getErrorMessage('boxWeightKg')">
+            {{ getErrorMessage('boxWeightKg') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="checkbox-group">
+          <label for="isOwnProduction">
+            <input 
+              id="isOwnProduction"
+              type="checkbox" 
+              formControlName="isOwnProduction"
+            >
+            Producción Propia
+          </label>
+        </div>
+        <div class="checkbox-group">
+          <label for="isActive">
+            <input 
+              id="isActive"
+              type="checkbox" 
+              formControlName="isActive"
+            >
+            Activo
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onCancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="!form.valid || loading">
+          {{ loading ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

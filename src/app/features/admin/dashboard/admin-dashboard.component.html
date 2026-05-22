@@ -1,0 +1,141 @@
+<div class="admin-dashboard">
+  <section class="hero-card">
+    <div>
+      <p class="eyebrow">Panel administrativo</p>
+      <h1>Bienvenido, {{ currentUser }}</h1>
+      <p class="hero-text">Vista ejecutiva conectada a datos reales del backend sobre CLIENTS, USERS, PRODUCTS, ORDERS y PROVIDERS.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+      <div class="hero-code">ADM</div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-icon" [ngStyle]="getCardStyle(stat)">{{ stat.code }}</div>
+      <div class="stat-content">
+        <span class="stat-title">{{ stat.title }}</span>
+        <strong class="stat-value">{{ stat.value }}</strong>
+      </div>
+    </article>
+  </section>
+
+  <section class="analytics-grid">
+    <article class="analytics-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Análisis</p>
+          <h2>Productos destacados del catálogo</h2>
+        </div>
+      </div>
+
+      <div class="chart-list">
+        <div class="chart-row" *ngFor="let item of topProducts">
+          <div class="chart-label">
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.detail }}</span>
+          </div>
+          <div class="chart-track">
+            <div class="chart-fill products-fill" [style.width.%]="getTopMetricValue(topProducts) ? (item.value / getTopMetricValue(topProducts)) * 100 : 0"></div>
+          </div>
+          <div class="chart-value">{{ item.value }}</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="analytics-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Análisis</p>
+          <h2>Clientes con más pedidos</h2>
+        </div>
+      </div>
+
+      <div class="chart-list">
+        <div class="chart-row" *ngFor="let item of topClients">
+          <div class="chart-label">
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.detail }}</span>
+          </div>
+          <div class="chart-track">
+            <div class="chart-fill clients-fill" [style.width.%]="getTopMetricValue(topClients) ? (item.value / getTopMetricValue(topClients)) * 100 : 0"></div>
+          </div>
+          <div class="chart-value">{{ item.value }}</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="analytics-card analytics-wide">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Análisis</p>
+          <h2>Pedidos por mes</h2>
+        </div>
+      </div>
+
+      <div class="monthly-bars">
+        <div class="month-row" *ngFor="let item of monthlyOrders">
+          <span>{{ item.month }}</span>
+          <div class="chart-track month-track">
+            <div class="chart-fill monthly-fill" [style.width.%]="(item.total / getMonthlyMax()) * 100"></div>
+          </div>
+          <strong>{{ item.total }}</strong>
+        </div>
+      </div>
+
+      <div class="category-strip">
+        <div class="category-item" *ngFor="let item of categoryDistribution">
+          <div class="category-header">
+            <strong>{{ item.category }}</strong>
+            <span>{{ item.percentage }}%</span>
+          </div>
+          <div class="chart-track">
+            <div class="chart-fill category-fill" [style.width.%]="item.percentage"></div>
+          </div>
+          <div class="chart-value">{{ item.totalKg }} uds</div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="content-grid">
+    <article class="activity-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Sistema</p>
+          <h2>Registros recientes del backend</h2>
+        </div>
+      </div>
+
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let item of activities">
+          <div class="activity-main">
+            <strong>{{ item.action }}</strong>
+            <span>{{ item.details }}</span>
+          </div>
+          <div class="activity-meta">Origen: {{ getActivityLabel(item.source) }} · {{ item.date | date:'dd/MM/yyyy HH:mm' }}</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="quick-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Accesos rápidos</p>
+          <h2>Navegación administrativa</h2>
+        </div>
+      </div>
+
+      <div class="quick-grid">
+        <a class="quick-item" *ngFor="let item of quickAccess" [routerLink]="item.route">
+          <div class="quick-code">{{ item.code }}</div>
+          <div class="quick-copy">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.description }}</span>
+          </div>
+        </a>
+      </div>
+    </article>
+  </section>
+</div>

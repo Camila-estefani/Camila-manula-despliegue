@@ -1,0 +1,113 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { PedidoService } from '../services/pedido.service';
+
+interface MenuItem {
+  label: string;
+  route: string;
+  shortLabel: string;
+}
+
+@Component({
+  selector: 'app-client-orders',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './client-orders.html',
+  styleUrl: './client-orders.css'
+})
+export class ClientOrdersComponent implements OnInit {
+  // Layout
+  sidebarOpen = true;
+  activeRoute = 'pedidos';
+
+  menuItems: MenuItem[] = [
+    { label: 'Mis Pedidos', route: '/customer/pedidos', shortLabel: 'PE' },
+    { label: 'Mi Perfil', route: '/customer/perfil', shortLabel: 'PR' }
+  ];
+
+  // Pedidos
+  mostrarFormulario: boolean = false;
+  productoSeleccionado: string = '';
+  cantidadIngresada: number | null = null;
+  listaPedidos: any[] = [];
+
+  constructor(private pedidoService: PedidoService) {}
+
+  ngOnInit() {
+    this.cargarPedidos();
+  }
+
+  // ===== SIDEBAR & LAYOUT =====
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  setActiveRoute(route: string) {
+    this.activeRoute = route;
+  }
+
+  // ===== PEDIDOS =====
+  cargarPedidos() {
+    console.log('📥 Cargando pedidos del servidor...');
+    this.pedidoService.getPedidosDesdeJava().subscribe({
+      next: (datosDesdeJava) => {
+        console.log('✓ Pedidos recibidos:', datosDesdeJava);
+        this.listaPedidos = datosDesdeJava;
+      },
+      error: (err) => {
+        console.error('❌ Error al cargar pedidos:', err);
+        this.listaPedidos = this.pedidoService.getPedidos();
+      }
+    });
+  }
+
+  toggleFormulario() {
+    this.mostrarFormulario = !this.mostrarFormulario;
+  }
+
+  agregarPedido() {
+    if (!this.productoSeleccionado || !this.cantidadIngresada) {
+      alert('Por favor completa todos los campos (Producto y Cantidad)');
+      return;
+    }
+
+    const timestamp = Date.now();
+    const orderCode = `ORD-${timestamp}`;
+    const hoy = new Date();
+    const orderDate = hoy.toISOString().split('T')[0];
+
+    const nuevoPedido = {
+      clientId: 1, 
+      orderCode: orderCode,
+      orderDate: orderDate,
+      status: 'Pending',
+      incoterm: 'FOB'
+    };
+
+    console.log('=== ENVIANDO PEDIDO ===', nuevoPedido);
+
+    this.pedidoService.agregarPedidoServidor(nuevoPedido).subscribe({
+      next: (respuesta) => {
+        console.log('✓ ¡ÉXITO!', respuesta);
+        alert('✓ Pedido guardado correctamente');
+        
+        setTimeout(() => {
+          this.cargarPedidos();
+          this.limpiarFormulario();
+          this.mostrarFormulario = false;
+        }, 500);
+      },
+      error: (err) => {
+        console.error('❌ ERROR AL GUARDAR:', err);
+        alert('❌ Error al guardar. Revisa la consola (F12)');
+      }
+    });
+  }
+
+  limpiarFormulario() {
+    this.productoSeleccionado = '';
+    this.cantidadIngresada = null;
+  }
+}

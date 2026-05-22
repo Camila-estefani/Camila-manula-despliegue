@@ -1,0 +1,354 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
+
+type ProviderStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+
+interface AuditUserOption {
+  userId: number;
+  username: string;
+}
+
+interface ProviderAuditLog {
+  userId: number;
+  action: 'CREATE' | 'UPDATE' | 'DEACTIVATE' | 'REACTIVATE';
+  tableName: 'AUDIT_LOG';
+  recordId: number;
+  date: string;
+  details: string;
+}
+
+interface ProviderItem {
+  providerId: number;
+  companyName: string;
+  taxId: string;
+  productType: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  totalPurchases: number;
+  totalVolumeKg: number;
+  totalAmount: number;
+  lastPurchaseDate: string | null;
+  mainProducts: string[];
+}
+
+interface ProviderFormValue {
+  companyName: string;
+  taxId: string;
+  productType: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
+  isActive: boolean;
+}
+
+interface ProviderAnalysisItem {
+  providerId: number;
+  companyName: string;
+  value: number;
+  label: string;
+}
+
+@Component({
+  selector: 'app-admin-provider-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './admin-provider-list.component.html',
+  styleUrls: ['./admin-provider-list.component.css']
+})
+export class AdminProviderListComponent implements OnInit {
+  providers: ProviderItem[] = [];
+  filteredProviders: ProviderItem[] = [];
+  providerForm!: FormGroup;
+  isModalOpen = false;
+  detailModalOpen = false;
+  isEditing = false;
+  editingId: number | null = null;
+  modalTitle = 'Nuevo Proveedor';
+  detailTitle = 'Detalle del proveedor';
+  searchTerm = '';
+  statusFilter: ProviderStatusFilter = 'ALL';
+  selectedProvider: ProviderItem | null = null;
+  private readonly providersApiUrl = `${environment.apiUrl}/v1/api/provider`;
+
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly http: HttpClient
+  ) {
+    this.initForm();
+  }
+
+  ngOnInit(): void {
+    this.loadProviders();
+  }
+
+  private loadProviders(): void {
+    this.http.get<any[]>(`${this.providersApiUrl}/summary`).subscribe({
+      next: (providers) => {
+        this.providers = (providers ?? []).map((provider) => ({
+          providerId: provider.providerId,
+          companyName: provider.companyName,
+          taxId: provider.taxId ?? '',
+          productType: provider.productType ?? '',
+          isActive: !!provider.isActive,
+          createdAt: provider.createdAt ?? '',
+          updatedAt: provider.updatedAt ?? '',
+          totalPurchases: provider.totalPurchases ?? 0,
+          totalVolumeKg: provider.totalVolumeKg ?? 0,
+          totalAmount: provider.totalAmount ?? 0,
+          lastPurchaseDate: provider.lastPurchaseDate ?? null,
+          mainProducts: provider.mainProducts ?? []
+        }));
+        this.filterProviders();
+      },
+      error: (error) => {
+        console.error('Error loading providers', error);
+        this.providers = [];
+        this.filteredProviders = [];
+      }
+    });
+  }
+
+  private initForm(): void {
+    this.providerForm = this.fb.group({
+      companyName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
+      taxId: ['', [Validators.required, Validators.pattern(/^\d{8,20}$/)]],
+      productType: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      contactEmail: ['', [Validators.email, Validators.maxLength(150)]],
+      contactPhone: ['', [Validators.pattern(/^\d{7,20}$/), Validators.maxLength(20)]],
+      address: ['', [Validators.maxLength(255)]],
+      isActive: [true]
+    });
+  }
+
+  get totalProviders(): number {
+    return this.providers.length;
+  }
+
+  get activeProviders(): number {
+    return this.providers.filter((provider) => provider.isActive).length;
+  }
+
+  get topProvidersCount(): number {
+    return this.providers.filter((provider) => provider.totalPurchases >= 10).length;
+  }
+
+  filterProviders(): void {
+    const term = this.searchTerm.trim().toLowerCase();
+    this.filteredProviders = this.providers.filter((provider) => {
+      const matchesSearch =
+        !term ||
+        provider.companyName.toLowerCase().includes(term) ||
+        provider.taxId.includes(term) ||
+        provider.productType.toLowerCase().includes(term);
+
+      const matchesStatus =
+        this.statusFilter === 'ALL' ||
+        (this.statusFilter === 'ACTIVE' && provider.isActive) ||
+        (this.statusFilter === 'INACTIVE' && !provider.isActive);
+
+      return matchesSearch && matchesStatus;
+    });
+  }
+
+  onSearchChange(event: Event): void {
+    this.searchTerm = (event.target as HTMLInputElement).value;
+    this.filterProviders();
+  }
+
+  onStatusFilterChange(value: string): void {
+    this.statusFilter = value as ProviderStatusFilter;
+    this.filterProviders();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.statusFilter = 'ALL';
+    this.filteredProviders = [...this.providers];
+  }
+
+  get topProvidersByVolume(): ProviderAnalysisItem[] {
+    return [...this.providers]
+      .sort((a, b) => b.totalVolumeKg - a.totalVolumeKg)
+      .slice(0, 5)
+      .map((provider) => ({
+        providerId: provider.providerId,
+        companyName: provider.companyName,
+        value: provider.totalVolumeKg,
+        label: `${provider.totalVolumeKg.toLocaleString('es-PE')} kg`
+      }));
+  }
+
+  get topProvidersByAmount(): ProviderAnalysisItem[] {
+    return [...this.providers]
+      .sort((a, b) => b.totalAmount - a.totalAmount)
+      .slice(0, 5)
+      .map((provider) => ({
+        providerId: provider.providerId,
+        companyName: provider.companyName,
+        value: provider.totalAmount,
+        label: `S/ ${provider.totalAmount.toLocaleString('es-PE')}`
+      }));
+  }
+
+  get maxVolumeValue(): number {
+    return this.topProvidersByVolume[0]?.value ?? 0;
+  }
+
+  get maxAmountValue(): number {
+    return this.topProvidersByAmount[0]?.value ?? 0;
+  }
+
+  openForm(): void {
+    this.isEditing = false;
+    this.editingId = null;
+    this.modalTitle = 'Nuevo Proveedor';
+    this.providerForm.reset({
+      companyName: '',
+      taxId: '',
+      productType: '',
+      contactEmail: '',
+      contactPhone: '',
+      address: '',
+      isActive: true
+    });
+    this.isModalOpen = true;
+  }
+
+  closeForm(): void {
+    this.isModalOpen = false;
+    this.providerForm.markAsPristine();
+    this.providerForm.markAsUntouched();
+  }
+
+  openDetail(provider: ProviderItem): void {
+    this.selectedProvider = provider;
+    this.detailTitle = `Detalle del proveedor: ${provider.companyName}`;
+    this.detailModalOpen = true;
+  }
+
+  closeDetail(): void {
+    this.detailModalOpen = false;
+    this.selectedProvider = null;
+  }
+
+  editProvider(provider: ProviderItem): void {
+    this.isEditing = true;
+    this.editingId = provider.providerId;
+    this.modalTitle = 'Editar Proveedor';
+    this.providerForm.patchValue(provider);
+    this.isModalOpen = true;
+  }
+
+  saveProvider(): void {
+    if (this.providerForm.invalid) {
+      this.providerForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.providerForm.getRawValue() as ProviderFormValue;
+    const payloadBase = {
+      companyName: formValue.companyName.trim(),
+      taxId: formValue.taxId.trim(),
+      productType: formValue.productType.trim(),
+      contactEmail: formValue.contactEmail?.trim() || null,
+      contactPhone: formValue.contactPhone?.trim() || null,
+      address: formValue.address?.trim() || null,
+      isActive: !!formValue.isActive
+    };
+
+    if (this.isEditing && this.editingId !== null) {
+      this.http.put(`${this.providersApiUrl}/update/${this.editingId}`, payloadBase).subscribe({
+        next: () => this.loadProviders(),
+        error: (error) => console.error('Error updating provider', error)
+      });
+    } else {
+      this.http.post(`${this.providersApiUrl}/save`, payloadBase).subscribe({
+        next: () => this.loadProviders(),
+        error: (error) => console.error('Error creating provider', error)
+      });
+    }
+
+    this.filterProviders();
+    this.closeForm();
+  }
+
+  deleteProvider(id: number): void {
+    if (!confirm('¿Estás seguro de que deseas eliminar este proveedor? El registro pasará a estado Inactivo.')) return;
+    this.http.patch(`${this.providersApiUrl}/${id}`, {}).subscribe({
+      next: () => this.loadProviders(),
+      error: (error) => console.error('Error deleting provider', error)
+    });
+  }
+
+  toggleStatus(provider: ProviderItem): void {
+    const request = provider.isActive
+      ? this.http.patch(`${this.providersApiUrl}/${provider.providerId}`, {})
+      : this.http.patch(`${this.providersApiUrl}/restore/${provider.providerId}`, {});
+
+    request.subscribe({
+      next: () => this.loadProviders(),
+      error: (error) => console.error('Error toggling provider status', error)
+    });
+  }
+
+  trackByProvider(_: number, item: ProviderItem): number {
+    return item.providerId;
+  }
+
+  getProvidersWithMostPurchases(): ProviderAnalysisItem[] {
+    return [...this.providers]
+      .sort((a, b) => b.totalPurchases - a.totalPurchases)
+      .slice(0, 5)
+      .map((provider) => ({
+        providerId: provider.providerId,
+        companyName: provider.companyName,
+        value: provider.totalPurchases,
+        label: `${provider.totalPurchases} compras`
+      }));
+  }
+
+  getProviderPurchaseShare(provider: ProviderItem): number {
+    const total = this.providers.reduce((sum, item) => sum + item.totalAmount, 0);
+    return total === 0 ? 0 : Math.round((provider.totalAmount / total) * 100);
+  }
+
+  getError(fieldName: string): string {
+    const control = this.providerForm.get(fieldName);
+    if (!control || !control.errors || !control.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return 'Este campo es requerido';
+    }
+
+    if (control.errors['minlength']) {
+      return `Debe tener al menos ${control.errors['minlength'].requiredLength} caracteres`;
+    }
+
+    if (control.errors['maxlength']) {
+      return `No puede superar ${control.errors['maxlength'].requiredLength} caracteres`;
+    }
+
+    if (control.errors['email']) {
+      return 'Ingresa un correo válido';
+    }
+
+    if (control.errors['pattern']) {
+      if (fieldName === 'taxId') {
+        return 'El RUC debe contener solo números entre 8 y 20 dígitos';
+      }
+      if (fieldName === 'contactPhone') {
+        return 'El teléfono debe contener solo números y símbolos válidos';
+      }
+      return 'Campo inválido';
+    }
+
+    return 'Campo inválido';
+  }
+}

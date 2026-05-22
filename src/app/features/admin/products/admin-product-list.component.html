@@ -1,0 +1,221 @@
+<div class="admin-product-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Panel administrativo</span>
+      <h1>Gestión de Productos</h1>
+      <p>Supervisión, control y auditoría sobre PRODUCTS con relación visual a CATEGORIES, USERS y AUDIT_LOG.</p>
+    </div>
+
+    <button class="action-primary" type="button" (click)="openForm()">
+      Crear producto
+    </button>
+  </section>
+
+  <section class="stats-grid">
+    <article class="mini-card accent-blue">
+      <span>Total productos</span>
+      <strong>{{ totalProducts }}</strong>
+    </article>
+    <article class="mini-card accent-green">
+      <span>Activos</span>
+      <strong>{{ activeProducts }}</strong>
+    </article>
+    <article class="mini-card accent-slate">
+      <span>Inactivos</span>
+      <strong>{{ inactiveProducts }}</strong>
+    </article>
+  </section>
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <i class="ion-search"></i>
+      <input
+        type="text"
+        [value]="searchTerm"
+        placeholder="Buscar por nombre"
+        (input)="onSearchChange($event)"
+      />
+    </div>
+
+    <select class="filter-select" [value]="categoryFilter" (change)="onCategoryFilterChange($any($event.target).value)">
+      <option value="ALL">Todas las categorías</option>
+      <option *ngFor="let category of categories" [value]="category.categoryId">{{ category.name }}</option>
+    </select>
+
+    <select class="filter-select" [value]="statusFilter" (change)="onStatusFilterChange($any($event.target).value)">
+      <option value="ALL">Todos los estados</option>
+      <option value="ACTIVE">Activos</option>
+      <option value="INACTIVE">Inactivos</option>
+    </select>
+
+    <button type="button" class="action-secondary" (click)="resetFilters()">
+      Limpiar
+    </button>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Nombre</th>
+            <th>Variedad</th>
+            <th>Calibre</th>
+            <th>Unidad de medida</th>
+            <th>Peso caja</th>
+            <th>Producción propia</th>
+            <th>Estado</th>
+            <th>Fecha creación</th>
+            <th>Última actualización</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of filteredProducts; trackBy: trackByProduct">
+            <td>{{ product.categoryName }}</td>
+            <td class="cell-name">{{ product.name }}</td>
+            <td>{{ product.variety }}</td>
+            <td>{{ product.caliber }}</td>
+            <td>{{ product.unitMeasure }}</td>
+            <td>{{ product.boxWeightKg | number:'1.2-2' }}</td>
+            <td>{{ product.isOwnProduction ? 'Sí' : 'No' }}</td>
+            <td>
+              <span class="status-pill" [class.active]="product.isActive" [class.inactive]="!product.isActive">
+                {{ product.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>{{ product.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ product.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="icon-actions">
+                <button type="button" class="icon-btn" (click)="editProduct(product)">Editar</button>
+                <button type="button" class="icon-btn danger" (click)="deleteProduct(product.productId)">Eliminar</button>
+                <button type="button" class="icon-btn" (click)="toggleProductStatus(product)">
+                  {{ product.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button type="button" class="icon-btn secondary" (click)="openDetail(product)">Ver detalle</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="filteredProducts.length === 0" class="empty-state">
+        <i class="ion-clipboard"></i>
+        <h3>No hay productos para mostrar</h3>
+        <p>Revisa los filtros o crea un nuevo producto para iniciar el panel.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeForm()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Formulario</span>
+          <h2>{{ modalTitle }}</h2>
+        </div>
+        <button class="modal-close" type="button" (click)="closeForm()">Cancelar</button>
+      </div>
+
+      <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="modal-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Categoría</label>
+            <select formControlName="categoryId">
+              <option [ngValue]="null">Seleccione una categoría</option>
+              <option *ngFor="let category of categories" [ngValue]="category.categoryId">{{ category.name }}</option>
+            </select>
+            <small class="error" *ngIf="getError('categoryId')">{{ getError('categoryId') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" formControlName="name" placeholder="Nombre del producto">
+            <small class="error" *ngIf="getError('name')">{{ getError('name') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Variedad</label>
+            <input type="text" formControlName="variety" placeholder="Variedad">
+            <small class="error" *ngIf="getError('variety')">{{ getError('variety') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Calibre</label>
+            <input type="text" formControlName="caliber" placeholder="Calibre">
+            <small class="error" *ngIf="getError('caliber')">{{ getError('caliber') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Unidad de medida</label>
+            <select formControlName="unitMeasure">
+              <option value="">Seleccione</option>
+              <option value="KG">KG</option>
+              <option value="UNIT">UNIT</option>
+              <option value="BOX">BOX</option>
+            </select>
+            <small class="error" *ngIf="getError('unitMeasure')">{{ getError('unitMeasure') }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Peso caja</label>
+            <input type="number" formControlName="boxWeightKg" min="0" step="0.01">
+            <small class="error" *ngIf="getError('boxWeightKg')">{{ getError('boxWeightKg') }}</small>
+          </div>
+
+          <div class="form-group checkbox-card">
+            <label>
+              <input type="checkbox" formControlName="isOwnProduction">
+              Producción propia
+            </label>
+          </div>
+
+          <div class="form-group checkbox-card">
+            <label>
+              <input type="checkbox" formControlName="isActive">
+              Activo
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="action-secondary" (click)="closeForm()">Cancelar</button>
+          <button type="submit" class="action-primary">Guardar producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="detailModalOpen && selectedProduct" (click)="closeDetail()">
+    <div class="modal-card detail-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Detalle</span>
+          <h2>{{ detailTitle }}</h2>
+        </div>
+        <button class="modal-close" type="button" (click)="closeDetail()">Cerrar</button>
+      </div>
+
+      <div class="detail-grid">
+        <section class="detail-panel">
+          <h3>Información del producto</h3>
+          <div class="detail-list">
+            <div><span>Categoría</span><strong>{{ selectedProduct.categoryName }}</strong></div>
+            <div><span>Nombre</span><strong>{{ selectedProduct.name }}</strong></div>
+            <div><span>Variedad</span><strong>{{ selectedProduct.variety }}</strong></div>
+            <div><span>Calibre</span><strong>{{ selectedProduct.caliber }}</strong></div>
+            <div><span>Unidad de medida</span><strong>{{ selectedProduct.unitMeasure }}</strong></div>
+            <div><span>Peso caja</span><strong>{{ selectedProduct.boxWeightKg | number:'1.2-2' }}</strong></div>
+            <div><span>Producción propia</span><strong>{{ selectedProduct.isOwnProduction ? 'Sí' : 'No' }}</strong></div>
+            <div><span>Estado</span><strong>{{ selectedProduct.isActive ? 'Activo' : 'Inactivo' }}</strong></div>
+            <div><span>Fecha creación</span><strong>{{ selectedProduct.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+            <div><span>Última actualización</span><strong>{{ selectedProduct.updatedAt | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>

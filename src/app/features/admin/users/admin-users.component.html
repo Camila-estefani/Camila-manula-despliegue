@@ -1,0 +1,384 @@
+<div class="users-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Panel administrativo</span>
+      <h1>Gestión de Usuarios</h1>
+      <p>Administra trabajadores, clientes y roles desde una vista limpia y empresarial.</p>
+    </div>
+
+    <button class="action-primary" type="button" (click)="openCreateUser()">
+      <i class="ion-plus"></i>
+      Crear usuario
+    </button>
+  </section>
+
+  <nav class="tabs-shell" aria-label="Secciones de usuarios">
+    <button type="button" class="tab-pill" [class.active]="activeTab === 'users'" (click)="switchTab('users')">
+      Usuarios
+    </button>
+    <button type="button" class="tab-pill" [class.active]="activeTab === 'roles'" (click)="switchTab('roles')">
+      Roles
+    </button>
+  </nav>
+
+  <section *ngIf="activeTab === 'users'" class="panel-stack">
+    <div class="stats-grid">
+      <article class="mini-card accent-blue">
+        <span>Total usuarios</span>
+        <strong>{{ userStats.total }}</strong>
+      </article>
+      <article class="mini-card accent-cyan">
+        <span>Trabajadores</span>
+        <strong>{{ userStats.workers }}</strong>
+      </article>
+      <article class="mini-card accent-violet">
+        <span>Clientes</span>
+        <strong>{{ userStats.clients }}</strong>
+      </article>
+      <article class="mini-card accent-green">
+        <span>Activos</span>
+        <strong>{{ userStats.active }}</strong>
+      </article>
+    </div>
+
+    <div class="toolbar-card">
+      <div class="search-box">
+        <i class="ion-search"></i>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre, username o documento" />
+      </div>
+
+      <select class="filter-select" [(ngModel)]="typeFilter">
+        <option value="ALL">Todos los tipos</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="WORKER">WORKER</option>
+        <option value="CLIENT">CLIENT</option>
+      </select>
+
+      <button type="button" class="action-secondary" (click)="loadUsers()">
+        <i class="ion-refresh"></i>
+        Actualizar
+      </button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre / Empresa</th>
+              <th>Tipo</th>
+              <th>Username</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers; trackBy: trackByUser">
+              <td>{{ user.userId }}</td>
+              <td>
+                <div class="primary-cell">
+                  <strong>{{ getDisplayName(user) }}</strong>
+                  <span>{{ getSecondaryLabel(user) }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="status-pill" [class.worker]="getUserType(user) === 'WORKER'" [class.client]="getUserType(user) === 'CLIENT'">
+                  {{ user.userTypeName || getUserType(user) }}
+                </span>
+              </td>
+              <td>{{ user.username }}</td>
+              <td>
+                <span class="status-pill" [class.active]="user.active" [class.inactive]="!user.active">
+                  {{ user.active ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>{{ user.createdAt ? (user.createdAt | date: 'dd/MM/yyyy HH:mm') : 'N/D' }}</td>
+              <td>
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" (click)="openEditUser(user)" title="Editar">
+                    <i class="ion-edit"></i>
+                  </button>
+                  <button type="button" class="icon-btn" (click)="toggleUserStatus(user)" title="Activar / desactivar">
+                    <i class="ion-power"></i>
+                  </button>
+                  <button type="button" class="icon-btn" (click)="openAssignRoleModal(user)" title="Asignar rol">
+                    <i class="ion-ribbon-b"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="filteredUsers.length === 0" class="empty-state">
+          <i class="ion-person-stalker"></i>
+          <h3>No hay usuarios para mostrar</h3>
+          <p>Usa el botón crear usuario para registrar un nuevo acceso.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section *ngIf="activeTab === 'roles'" class="roles-grid">
+    <aside class="role-list-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Catálogo</span>
+          <h2>Roles</h2>
+        </div>
+        <button type="button" class="action-secondary" (click)="createRoleFromPanel()">
+          <i class="ion-plus-round"></i>
+          Nuevo rol
+        </button>
+      </div>
+
+      <div class="role-list">
+        <button *ngFor="let role of roles; trackBy: trackByRole" type="button" class="role-item" [class.active]="selectedRole?.roleId === role.roleId" (click)="selectRole(role)">
+          <strong>{{ role.name }}</strong>
+          <span>{{ role.userCount || 0 }} usuarios</span>
+        </button>
+      </div>
+    </aside>
+
+    <article class="role-detail-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Detalle</span>
+          <h2>{{ selectedRole ? selectedRole.name : 'Crear rol' }}</h2>
+        </div>
+        <div class="icon-actions">
+          <button type="button" class="action-primary" (click)="saveRole()" [disabled]="roleForm.invalid">
+            <i class="ion-checkmark"></i>
+            Guardar cambios
+          </button>
+          <button type="button" class="action-secondary" [disabled]="!selectedRole" (click)="deleteSelectedRole()">
+            <i class="ion-trash-a"></i>
+            Eliminar rol
+          </button>
+        </div>
+      </div>
+
+      <form [formGroup]="roleForm" class="role-form" (ngSubmit)="saveRole()">
+        <div class="form-row">
+          <label>
+            Nombre
+            <input type="text" formControlName="name" placeholder="ADMIN" maxlength="50" />
+            <small class="field-error" *ngIf="getControlError(roleForm, 'name', 'El nombre del rol')">{{ getControlError(roleForm, 'name', 'El nombre del rol') }}</small>
+          </label>
+          <label>
+            Descripcion
+            <input type="text" formControlName="description" placeholder="Acceso completo al panel" maxlength="255" />
+            <small class="field-error" *ngIf="getControlError(roleForm, 'description', 'La descripción')">{{ getControlError(roleForm, 'description', 'La descripción') }}</small>
+          </label>
+        </div>
+
+        <div class="permissions-card">
+          <div class="permissions-header">
+            <h3>Permisos visuales</h3>
+            <p>Checklist editable como referencia funcional del rol.</p>
+          </div>
+          <div class="permission-list">
+            <label *ngFor="let permission of permissionChips" class="permission-item">
+              <input type="checkbox" [(ngModel)]="permission.checked" [ngModelOptions]="{ standalone: true }" />
+              <span>{{ permission.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="role-assign-panel">
+          <div>
+            <h3>Asignar rol a usuario</h3>
+            <p>Selecciona un usuario del sistema y aplica el rol actual.</p>
+          </div>
+
+          <div class="assign-controls">
+            <select class="filter-select" [(ngModel)]="selectedUserForAssignment" [ngModelOptions]="{ standalone: true }">
+              <option [ngValue]="null">Selecciona un usuario</option>
+              <option *ngFor="let user of users" [ngValue]="user">{{ getDisplayName(user) }} - {{ user.username }}</option>
+            </select>
+
+            <button type="button" class="action-secondary" [disabled]="!selectedRole || !selectedUserForAssignment" (click)="assignCurrentRoleToSelectedUser()">
+              <i class="ion-arrow-swap"></i>
+              Asignar
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="role-users-card">
+        <h3>Usuarios con este rol</h3>
+        <div class="role-user-list" *ngIf="roleUsers.length > 0; else noRoleUsers">
+          <div class="role-user-item" *ngFor="let user of roleUsers">
+            <strong>{{ getDisplayName(user) }}</strong>
+            <span>{{ user.username }}</span>
+          </div>
+        </div>
+
+        <ng-template #noRoleUsers>
+          <div class="empty-inline">Todavia no hay usuarios asociados a este rol.</div>
+        </ng-template>
+      </div>
+    </article>
+  </section>
+
+  <div *ngIf="isUserModalOpen" class="modal-overlay" (click)="closeUserModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Formulario</span>
+          <h2>{{ editingUserId ? 'Editar usuario' : 'Crear usuario' }}</h2>
+        </div>
+        <button type="button" class="close-btn" (click)="closeUserModal()">Cerrar</button>
+      </div>
+
+      <form [formGroup]="userForm" class="user-form" (ngSubmit)="saveUser()">
+        <div class="form-grid">
+          <div class="form-block">
+            <h3>Datos del usuario</h3>
+            <label>
+              Tipo usuario
+              <select formControlName="roleId">
+                <option *ngFor="let role of roles" [ngValue]="role.roleId">
+                  {{ role.name }}
+                </option>
+              </select>
+              <small class="field-error" *ngIf="getControlError(userForm, 'roleId', 'El rol')">{{ getControlError(userForm, 'roleId', 'El rol') }}</small>
+            </label>
+
+            <label>
+              Username
+              <input type="text" formControlName="username" placeholder="usuario.admin" maxlength="50" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'username', 'El username')">{{ getControlError(userForm, 'username', 'El username') }}</small>
+            </label>
+
+            <label>
+              Password
+              <input type="password" formControlName="password" placeholder="Dejar vacio para conservar en edicion" maxlength="100" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'password', 'La contraseña')">{{ getControlError(userForm, 'password', 'La contraseña') }}</small>
+            </label>
+
+            <label class="toggle-line">
+              <input type="checkbox" formControlName="active" />
+              Usuario activo
+            </label>
+          </div>
+
+          <div class="form-block" formGroupName="worker" *ngIf="['ADMIN','EMPLOYEE'].includes(getSelectedRoleName())">
+            <h3>Datos del trabajador</h3>
+            <label>
+              Nombres
+              <input type="text" formControlName="firstName" placeholder="Ana" maxlength="100" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'worker.firstName', 'Los nombres')">{{ getControlError(userForm, 'worker.firstName', 'Los nombres') }}</small>
+            </label>
+
+            <label>
+              Apellidos
+              <input type="text" formControlName="lastName" placeholder="Perez" maxlength="100" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'worker.lastName', 'Los apellidos')">{{ getControlError(userForm, 'worker.lastName', 'Los apellidos') }}</small>
+            </label>
+
+            <label>
+              DNI
+              <input type="text" formControlName="documentNumber" placeholder="12345678" maxlength="20" inputmode="numeric" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'worker.documentNumber', 'El DNI')">{{ getControlError(userForm, 'worker.documentNumber', 'El DNI') }}</small>
+            </label>
+
+            <label>
+              Teléfono
+              <input type="text" formControlName="phone" placeholder="999999999" maxlength="9" inputmode="numeric" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'worker.phone', 'El teléfono')">{{ getControlError(userForm, 'worker.phone', 'El teléfono') }}</small>
+            </label>
+
+            <label>
+              Email
+              <input type="email" formControlName="email" placeholder="correo@empresa.com" maxlength="150" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'worker.email', 'El email')">{{ getControlError(userForm, 'worker.email', 'El email') }}</small>
+            </label>
+
+            <label>
+              Dirección
+              <input type="text" formControlName="address" placeholder="Av. Principal 123" maxlength="255" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'worker.address', 'La dirección')">{{ getControlError(userForm, 'worker.address', 'La dirección') }}</small>
+            </label>
+          </div>
+
+          <div class="form-block" formGroupName="client" *ngIf="getSelectedRoleName() === 'CLIENT'">
+            <h3>Datos del cliente</h3>
+            <label>
+              Empresa
+              <input type="text" formControlName="companyName" placeholder="Empresa SAC" maxlength="200" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'client.companyName', 'La empresa')">{{ getControlError(userForm, 'client.companyName', 'La empresa') }}</small>
+            </label>
+
+            <label>
+              RUC
+              <input type="text" formControlName="taxId" placeholder="20123456789" maxlength="20" inputmode="numeric" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'client.taxId', 'El RUC')">{{ getControlError(userForm, 'client.taxId', 'El RUC') }}</small>
+            </label>
+
+            <label>
+              País
+              <input type="text" formControlName="country" placeholder="Peru" maxlength="100" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'client.country', 'El país')">{{ getControlError(userForm, 'client.country', 'El país') }}</small>
+            </label>
+
+            <label>
+              Dirección
+              <input type="text" formControlName="address" placeholder="Ciudad / distrito" maxlength="255" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'client.address', 'La dirección')">{{ getControlError(userForm, 'client.address', 'La dirección') }}</small>
+            </label>
+
+            <label>
+              Email
+              <input type="email" formControlName="email" placeholder="compras@empresa.com" maxlength="150" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'client.email', 'El email')">{{ getControlError(userForm, 'client.email', 'El email') }}</small>
+            </label>
+
+            <label>
+              Limite de credito
+              <input type="number" formControlName="creditLimit" min="0" step="0.01" />
+              <small class="field-error" *ngIf="getControlError(userForm, 'client.creditLimit', 'El límite de crédito')">{{ getControlError(userForm, 'client.creditLimit', 'El límite de crédito') }}</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="action-secondary" (click)="closeUserModal()">Cancelar</button>
+          <button type="submit" class="action-primary" [disabled]="userForm.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div *ngIf="isRoleAssignModalOpen" class="modal-overlay" (click)="closeAssignRoleModal()">
+    <div class="modal-card modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Acción rápida</span>
+          <h2>Asignar rol</h2>
+        </div>
+        <button type="button" class="close-btn" (click)="closeAssignRoleModal()">Cerrar</button>
+      </div>
+
+      <form [formGroup]="assignRoleForm" class="user-form" (ngSubmit)="confirmAssignRole()">
+        <label>
+          Rol
+          <select formControlName="roleId">
+            <option [ngValue]="null">Selecciona un rol</option>
+            <option *ngFor="let role of roles" [ngValue]="role.roleId">
+              {{ role.name }}
+            </option>
+          </select>
+          <small class="field-error" *ngIf="getControlError(assignRoleForm, 'roleId', 'El rol')">{{ getControlError(assignRoleForm, 'roleId', 'El rol') }}</small>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="action-secondary" (click)="closeAssignRoleModal()">Cancelar</button>
+          <button type="submit" class="action-primary" [disabled]="assignRoleForm.invalid">Asignar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+<div class="section-container settings-page">
+  <div class="section-header">
+    <h1>Configuración del Sistema</h1>
+  </div>
+
+  <div class="settings-grid">
+    <div class="settings-card">
+      <h3>Información General</h3>
+      <div class="setting-row">
+        <span>Nombre del Sistema</span>
+        <strong>{{ systemName }}</strong>
+      </div>
+      <div class="setting-row">
+        <span>Versión</span>
+        <strong>{{ systemVersion }}</strong>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Preferencias</h3>
+      <div class="setting-row">
+        <span>Modo Mantenimiento</span>
+        <span [class]="maintenanceMode ? 'badge-on' : 'badge-off'">
+          {{ maintenanceMode ? 'Activo' : 'Inactivo' }}
+        </span>
+      </div>
+      <div class="setting-row">
+        <span>Notificaciones</span>
+        <span [class]="notificationsEnabled ? 'badge-on' : 'badge-off'">
+          {{ notificationsEnabled ? 'Habilitadas' : 'Deshabilitadas' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

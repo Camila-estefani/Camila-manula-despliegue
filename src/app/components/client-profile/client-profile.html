@@ -1,0 +1,181 @@
+<div class="client-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.sidebar-closed]="!sidebarOpen">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">VISONS</h1>
+      <button class="toggle-btn" (click)="toggleSidebar()" title="Alternar menú">
+        <span class="hamburger">☰</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="menu-list">
+        <li *ngFor="let item of menuItems" 
+            [class.active]="activeRoute === item.route.split('/').pop()"
+            class="menu-item">
+          <a [routerLink]="item.route" 
+             (click)="setActiveRoute(item.route.split('/').pop()!)"
+             class="menu-link">
+            <span class="menu-icon">{{ item.shortLabel }}</span>
+            <span class="menu-label" *ngIf="sidebarOpen">{{ item.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer" *ngIf="sidebarOpen">
+      <button type="button" class="logout-link" (click)="logout()">Cerrar sesión</button>
+      <p class="version">v1.0.0</p>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Hero Card -->
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Panel de Clientes</span>
+          <h1>Mi Perfil</h1>
+          <p>Gestiona la información real de tu cuenta, contacto, foto y credenciales desde una sola pantalla.</p>
+          <div class="hero-meta">
+            <span class="meta-pill">{{ displayEmail }}</span>
+            <span class="meta-pill">Registrado: {{ registrationDate }}</span>
+          </div>
+        </div>
+        <div class="hero-avatar">
+          <ng-container *ngIf="profileImagePreview; else fallbackAvatar">
+            <img [src]="profileImagePreview" alt="Foto de perfil" class="avatar-image">
+          </ng-container>
+          <ng-template #fallbackAvatar>
+            <div class="avatar-fallback">{{ initials }}</div>
+          </ng-template>
+        </div>
+      </section>
+
+      <!-- Profile Card -->
+      <section class="profile-card">
+        <div *ngIf="loading" class="state-box">Cargando perfil...</div>
+        <div *ngIf="!loading && errorMessage" class="state-box error">{{ errorMessage }}</div>
+
+        <div class="profile-grid" *ngIf="!loading && !errorMessage">
+          <section class="profile-section summary-panel">
+            <h3 class="section-title">Información del cliente</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Nombre completo</span>
+                <p class="info-value">{{ displayName }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Correo electrónico</span>
+                <p class="info-value">{{ displayEmail }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Teléfono</span>
+                <p class="info-value">{{ client?.phone || '—' }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Dirección</span>
+                <p class="info-value">{{ client?.address || '—' }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">RUC / ID tributario</span>
+                <p class="info-value">{{ client?.taxId || '—' }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">País</span>
+                <p class="info-value">{{ client?.country || '—' }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Fecha de registro</span>
+                <p class="info-value">{{ registrationDate }}</p>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Estado</span>
+                <p class="info-value">{{ client?.active === false ? 'Inactivo' : 'Activo' }}</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="profile-section form-panel">
+            <h3 class="section-title">Editar datos personales</h3>
+            <div class="state-box success-banner" *ngIf="successMessage">{{ successMessage }}</div>
+            <div class="state-box error" *ngIf="errorMessage">{{ errorMessage }}</div>
+            <form class="form-group" [formGroup]="profileForm" (ngSubmit)="guardarCambios()">
+              <div class="form-field">
+                <label class="form-label" for="companyName">Nombre / razón social</label>
+                <input id="companyName" type="text" class="form-input" formControlName="companyName" maxlength="200">
+                <small class="field-error" *ngIf="profileForm.get('companyName')?.touched && profileForm.get('companyName')?.hasError('required')">El nombre es obligatorio.</small>
+                <small class="field-error" *ngIf="profileForm.get('companyName')?.touched && profileForm.get('companyName')?.hasError('minlength')">Debe tener al menos 3 caracteres.</small>
+                <small class="field-error" *ngIf="profileForm.get('companyName')?.touched && profileForm.get('companyName')?.hasError('maxlength')">No puede superar 200 caracteres.</small>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label" for="email">Correo electrónico</label>
+                <input id="email" type="email" class="form-input" formControlName="email" readonly>
+                <small class="form-text">El correo se mantiene vinculado a tu cuenta.</small>
+                <small class="field-error" *ngIf="profileForm.get('email')?.touched && profileForm.get('email')?.hasError('required')">El correo es obligatorio.</small>
+                <small class="field-error" *ngIf="profileForm.get('email')?.touched && profileForm.get('email')?.hasError('email')">Ingresa un correo válido.</small>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label" for="phone">Teléfono</label>
+                <input id="phone" type="text" class="form-input" formControlName="phone" placeholder="999999999" maxlength="9" inputmode="numeric">
+                <small class="field-error" *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.hasError('required')">El teléfono es obligatorio.</small>
+                <small class="field-error" *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.hasError('pattern')">El teléfono debe tener exactamente 9 dígitos numéricos.</small>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label" for="address">Dirección</label>
+                <textarea id="address" class="form-input form-textarea" rows="3" formControlName="address" placeholder="Dirección de contacto" maxlength="255"></textarea>
+                <small class="field-error" *ngIf="profileForm.get('address')?.touched && profileForm.get('address')?.hasError('required')">La dirección es obligatoria.</small>
+                <small class="field-error" *ngIf="profileForm.get('address')?.touched && profileForm.get('address')?.hasError('maxlength')">La dirección no puede superar 255 caracteres.</small>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label">Foto de perfil</label>
+                <div class="photo-actions">
+                  <label class="photo-upload">
+                    <input type="file" accept="image/*" (change)="onPhotoSelected($event)">
+                    <span>Seleccionar imagen</span>
+                  </label>
+                  <button type="button" class="ghost-button" (click)="clearPhoto()">Quitar foto</button>
+                </div>
+                <small class="form-text">La imagen se guarda como parte del perfil y se sincroniza con tu sesión.</small>
+              </div>
+
+              <div class="password-grid">
+                <div class="form-field">
+                  <label class="form-label" for="currentPassword">Contraseña actual</label>
+                  <input id="currentPassword" type="password" class="form-input" formControlName="currentPassword" placeholder="Ingresa tu contraseña actual">
+                  <small class="field-error" *ngIf="profileForm.touched && profileForm.hasError('currentPasswordRequired')">Debes ingresar tu contraseña actual para cambiarla.</small>
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="newPassword">Nueva contraseña</label>
+                  <input id="newPassword" type="password" class="form-input" formControlName="newPassword" placeholder="Nueva contraseña">
+                  <small class="field-error" *ngIf="profileForm.get('newPassword')?.touched && profileForm.get('newPassword')?.hasError('minlength')">La nueva contraseña debe tener al menos 6 caracteres.</small>
+                  <small class="field-error" *ngIf="profileForm.get('newPassword')?.touched && profileForm.get('newPassword')?.hasError('maxlength')">La nueva contraseña no puede superar 100 caracteres.</small>
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="confirmPassword">Confirmar contraseña</label>
+                  <input id="confirmPassword" type="password" class="form-input" formControlName="confirmPassword" placeholder="Repite la contraseña">
+                  <small class="field-error" *ngIf="profileForm.touched && profileForm.hasError('passwordMismatch')">La confirmación de la contraseña no coincide.</small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="action-primary" [disabled]="saving || loading || profileForm.invalid">
+                  {{ saving ? 'Guardando...' : '✓ Guardar cambios' }}
+                </button>
+                <button type="button" class="action-secondary" (click)="logout()">Cerrar sesión</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

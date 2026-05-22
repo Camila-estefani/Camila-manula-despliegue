@@ -1,0 +1,184 @@
+<div class="client-requests-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Panel administrativo</span>
+      <h1>Solicitudes de acceso de clientes</h1>
+      <p>Gestione las solicitudes registradas en CLIENT_REQUESTS y apruebe o rechace accesos desde un solo lugar.</p>
+    </div>
+
+    <div class="hero-actions">
+      <button type="button" class="action-secondary" (click)="loadRequests()">
+        <i class="ion-refresh"></i>
+        Actualizar
+      </button>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="mini-card accent-blue">
+      <span>Total solicitudes</span>
+      <strong>{{ totalRequests }}</strong>
+    </article>
+    <article class="mini-card accent-amber">
+      <span>Pendientes</span>
+      <strong>{{ pendingRequests }}</strong>
+    </article>
+    <article class="mini-card accent-green">
+      <span>Aprobadas</span>
+      <strong>{{ approvedRequests }}</strong>
+    </article>
+    <article class="mini-card accent-red">
+      <span>Rechazadas</span>
+      <strong>{{ rejectedRequests }}</strong>
+    </article>
+  </section>
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <i class="ion-search"></i>
+      <input
+        type="text"
+        [value]="searchTerm"
+        placeholder="Buscar por usuario, empresa, correo o teléfono"
+        (input)="onSearchChange($event)"
+      />
+    </div>
+
+    <select class="filter-select" [value]="statusFilter" (change)="onStatusChange($any($event.target).value)">
+      <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+    </select>
+
+    <button type="button" class="action-secondary" (click)="resetFilters()">Limpiar</button>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table class="requests-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Nombre completo</th>
+            <th>Empresa</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Fecha de solicitud</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of filteredRequests; trackBy: trackByRequest">
+            <td class="cell-code">{{ request.username }}</td>
+            <td>
+              <strong>{{ request.firstName }} {{ request.lastName }}</strong>
+            </td>
+            <td>{{ request.companyName || 'N/D' }}</td>
+            <td>{{ request.email }}</td>
+            <td>{{ request.phone || 'N/D' }}</td>
+            <td>{{ request.requestDate | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <span class="status-badge" [class]="getRequestStatusClass(request.status)">
+                {{ getRequestStatusLabel(request.status) }}
+              </span>
+            </td>
+            <td>
+              <div class="action-group">
+                <button type="button" class="btn-action" (click)="openDetails(request)">
+                  <i class="ion-eye"></i>
+                  Ver detalles
+                </button>
+                <button
+                  *ngIf="isPending(request.status)"
+                  type="button"
+                  class="btn-action approve"
+                  (click)="openActionConfirmation(request, 'approve')"
+                >
+                  <i class="ion-checkmark-round"></i>
+                  Aceptar
+                </button>
+                <button
+                  *ngIf="isPending(request.status)"
+                  type="button"
+                  class="btn-action reject"
+                  (click)="openActionConfirmation(request, 'reject')"
+                >
+                  <i class="ion-close-round"></i>
+                  Denegar
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="!isLoading && filteredRequests.length === 0" class="empty-state">
+        <i class="ion-document-text"></i>
+        <h3>No hay solicitudes para mostrar</h3>
+        <p>Pruebe cambiando los filtros o espere a que lleguen nuevas solicitudes desde el formulario público.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="selectedRequest" (click)="closeDetails()">
+    <div class="modal-card detail-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Detalle de solicitud</span>
+          <h2>{{ selectedRequest.username }}</h2>
+        </div>
+        <button type="button" class="modal-close" (click)="closeDetails()">Cerrar</button>
+      </div>
+
+      <div class="detail-grid">
+        <section class="detail-panel">
+          <h3>Información general</h3>
+          <div class="detail-list">
+            <div><span>Username</span><strong>{{ selectedRequest.username }}</strong></div>
+            <div><span>Nombre</span><strong>{{ selectedRequest.firstName }} {{ selectedRequest.lastName }}</strong></div>
+            <div><span>Empresa</span><strong>{{ selectedRequest.companyName || 'N/D' }}</strong></div>
+            <div><span>Email</span><strong>{{ selectedRequest.email }}</strong></div>
+            <div><span>Teléfono</span><strong>{{ selectedRequest.phone || 'N/D' }}</strong></div>
+            <div><span>Estado</span><strong>{{ getRequestStatusLabel(selectedRequest.status) }}</strong></div>
+          </div>
+        </section>
+
+        <section class="detail-panel">
+          <h3>Datos enviados</h3>
+          <div class="detail-list">
+            <div><span>Tax ID</span><strong>{{ selectedRequest.taxId || 'N/D' }}</strong></div>
+            <div><span>Dirección</span><strong>{{ selectedRequest.address || 'N/D' }}</strong></div>
+            <div><span>Ubigeo</span><strong>{{ selectedRequest.ubigeoId ?? 'N/D' }}</strong></div>
+            <div><span>Fecha de solicitud</span><strong>{{ selectedRequest.requestDate | date:'dd/MM/yyyy HH:mm' }}</strong></div>
+            <div><span>Revisado por</span><strong>{{ selectedRequest.reviewedBy ?? 'N/D' }}</strong></div>
+            <div class="detail-note"><span>Comentarios</span><p>{{ selectedRequest.comments || 'Sin comentarios adicionales' }}</p></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="isConfirmOpen" (click)="closeConfirmation()">
+    <div class="modal-card confirm-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Confirmación</span>
+          <h2>{{ getActionTitle() }}</h2>
+        </div>
+        <button type="button" class="modal-close" (click)="closeConfirmation()">Cancelar</button>
+      </div>
+
+      <p class="confirm-message">{{ getActionMessage() }}</p>
+
+      <div class="modal-actions">
+        <button type="button" class="action-secondary" (click)="closeConfirmation()">Volver</button>
+        <button type="button" [class]="getActionButtonClass()" (click)="confirmAction()" [disabled]="isLoading">
+          {{ isLoading ? 'Procesando...' : getActionButtonLabel() }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="snackbar" *ngIf="toastMessage" [class.success]="toastType === 'success'" [class.error]="toastType === 'error'">
+    {{ toastMessage }}
+  </div>
+</div>

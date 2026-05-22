@@ -1,0 +1,46 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+
+interface MenuItem {
+  label: string;
+  route: string;
+  shortLabel: string;
+}
+
+@Component({
+  selector: 'app-client-profile',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './client-profile.html',
+  styleUrl: './client-profile.css'
+})
+export class ClientProfileComponent {
+  // Layout
+  sidebarOpen = true;
+  activeRoute = 'perfil';
+
+  menuItems: MenuItem[] = [
+    { label: 'Mis Pedidos', route: '/customer/pedidos', shortLabel: 'PE' },
+    { label: 'Mi Perfil', route: '/customer/perfil', shortLabel: 'PR' }
+  ];
+
+  // Perfil
+  empresa: string = 'Visons Export S.A.C';
+  ruc: string = '20123456789';
+  email: string = 'admin@visons.com';
+
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  setActiveRoute(route: string) {
+    this.activeRoute = route;
+  }
+
+  guardarCambios() {
+    alert('¡Perfil actualizado con éxito! Nuevo correo: ' + this.email);
+    console.log('Datos guardados:', { empresa: this.empresa, ruc: this.ruc, email: this.email });
+  }
+}

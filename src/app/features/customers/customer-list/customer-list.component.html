@@ -1,0 +1,85 @@
+<div class="customer-list-container">
+  <!-- Header -->
+  <div class="list-header">
+    <h2>Gestión de Clientes</h2>
+    <button class="btn-primary" (click)="onNew()">
+      <i class="ion-plus"></i> Nuevo Cliente
+    </button>
+  </div>
+
+  <!-- Alert -->
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input 
+      #customerSearch
+      type="text" 
+      placeholder="Buscar por nombre, email o RUC..."
+      (input)="search(customerSearch.value)"
+    >
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando clientes...</p>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && filteredCustomers.length > 0" class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Empresa</th>
+          <th>RUC/TAX ID</th>
+          <th>Email</th>
+          <th>País</th>
+          <th>Límite Crédito</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let customer of filteredCustomers">
+          <td>{{ customer.clientId }}</td>
+          <td>{{ customer.companyName }}</td>
+          <td>{{ customer.taxId }}</td>
+          <td>{{ customer.email }}</td>
+          <td>{{ customer.country }}</td>
+          <td>${{ customer.creditLimit | number: '1.2-2' }}</td>
+          <td>
+            <span [class.active]="customer.isActive" [class.inactive]="!customer.isActive">
+              {{ customer.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-small btn-edit" (click)="onEdit(customer)" title="Editar">
+              <i class="ion-edit"></i>
+            </button>
+            <button class="btn-small btn-delete" (click)="onDelete(customer)" title="Eliminar">
+              <i class="ion-trash-a"></i>
+            </button>
+            <button *ngIf="!customer.isActive" class="btn-small btn-restore" (click)="onRestore(customer)" title="Restaurar">
+              <i class="ion-refresh"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredCustomers.length === 0" class="empty-state">
+    <p>No hay clientes para mostrar</p>
+  </div>
+
+  <!-- Form Modal -->
+  <app-customer-form 
+    *ngIf="showForm"
+    [customer]="selectedCustomer"
+    [isEditing]="isEditing"
+    (saved)="onFormSaved($event)"
+    (closed)="onFormClosed()"
+  ></app-customer-form>
+</div>
